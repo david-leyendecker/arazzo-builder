@@ -94,10 +94,10 @@ npm run preview
 - ✓ Implementation of Context-Menu Plugin
 - ✓ Basic node types (Start, Step, End)
 
-### Phase 2: Arazzo Validation & YAML
-- Mapping visual connections to onSuccess/onFailure paths
-- YAML export logic
-- Validation of workflow structure
+### Phase 2: Arazzo Validation & YAML ✓
+- ✓ Mapping visual connections to onSuccess/onFailure paths
+- ✓ YAML export logic
+- ✓ Validation of workflow structure
 
 ### Phase 3: Smart Suggestions
 - Suggesting operationIds based on context
