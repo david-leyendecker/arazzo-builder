@@ -307,7 +307,7 @@ const closeContextMenu = () => {
 <template>
   <div class="workflow-canvas-wrapper h-full w-full relative">
     <!-- Header Bar -->
-    <div class="absolute top-0 left-0 right-0 z-10 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+    <div class="absolute top-0 left-0 right-0 z-10 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-4 py-3">
       <div class="flex items-center justify-between">
         <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Arazzo Workflow Builder</h1>
         <div class="flex gap-2">
@@ -353,7 +353,7 @@ const closeContextMenu = () => {
     />
 
     <!-- Help Text -->
-    <div class="absolute bottom-4 left-4 bg-white/90 dark:bg-gray-800/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 dark:text-gray-300 z-10">
+    <div class="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 dark:text-gray-300 z-10">
       <p class="font-medium mb-1">Quick Tips:</p>
       <ul class="space-y-1">
         <li>• Right-click on canvas to add nodes</li>
@@ -378,20 +378,20 @@ const closeContextMenu = () => {
   opacity: 0.8;
 }
 
-/* Dark mode styles for Vue Flow Controls */
+/* Dark mode styles for Vue Flow Controls - using darker slate colors */
 :global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls) {
-  background-color: rgb(31 41 55) !important;
-  border-color: rgb(75 85 99) !important;
+  background-color: rgb(15 23 42) !important;
+  border-color: rgb(51 65 85) !important;
 }
 
 :global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls-button) {
-  background-color: rgb(31 41 55) !important;
-  border-color: rgb(75 85 99) !important;
+  background-color: rgb(15 23 42) !important;
+  border-color: rgb(51 65 85) !important;
   color: rgb(229 231 235) !important;
 }
 
 :global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls-button):hover {
-  background-color: rgb(55 65 81) !important;
+  background-color: rgb(30 41 59) !important;
 }
 
 :global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls-button svg) {

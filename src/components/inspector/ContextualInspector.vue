@@ -190,7 +190,7 @@ const handleBlur = () => {
             type="text"
             :value="(selectedNode.data as { workflowId: string }).workflowId"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
           />
         </div>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Right-click this node to add steps to your workflow.</p>
@@ -204,7 +204,7 @@ const handleBlur = () => {
             type="text"
             :value="selectedNode.id"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
           />
         </div>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
@@ -220,7 +220,7 @@ const handleBlur = () => {
             type="text"
             :value="(selectedNode.data as { name: string }).name"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
           />
         </div>
         <div>
@@ -229,7 +229,7 @@ const handleBlur = () => {
             type="text"
             :value="(selectedNode.data as { in: string }).in"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
           />
         </div>
         <div>
@@ -238,7 +238,7 @@ const handleBlur = () => {
             type="text"
             :value="(selectedNode.data as { value: string }).value"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
           />
         </div>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Parameter node for step configuration.</p>
@@ -252,7 +252,7 @@ const handleBlur = () => {
             type="text"
             :value="(selectedNode.data as { criteria: string }).criteria"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
           />
         </div>
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Success validation criteria for the step.</p>
@@ -266,7 +266,7 @@ const handleBlur = () => {
           type="text"
           :value="selectedStep?.stepId"
           readonly
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
         />
       </div>
 
@@ -281,7 +281,7 @@ const handleBlur = () => {
           @input="handleOperationIdInput"
           @focus="showSuggestions = operationIdInput.length > 0 && filteredOperations.length > 0"
           @blur="handleBlur"
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100"
           :class="{ 'border-red-500 dark:border-red-500': operationIdValidation && !operationIdValidation.valid }"
           placeholder="e.g., getUserById"
         />
@@ -297,13 +297,13 @@ const handleBlur = () => {
         <!-- Suggestions dropdown -->
         <div 
           v-if="showSuggestions && hasOpenAPISpecs" 
-          class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto"
+          class="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md shadow-lg max-h-60 overflow-auto"
         >
           <div
             v-for="operation in filteredOperations.slice(0, 10)"
             :key="operation.operationId"
             @click="selectOperation(operation.operationId)"
-            class="px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-0"
+            class="px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-slate-600 last:border-0"
           >
             <div class="font-medium text-sm text-gray-800 dark:text-gray-200">{{ operation.operationId }}</div>
             <div class="text-xs text-gray-500 dark:text-gray-400">
@@ -328,7 +328,7 @@ const handleBlur = () => {
           :value="selectedStep?.description || ''"
           @input="updateDescription"
           rows="3"
-          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100"
           placeholder="Describe this step..."
         ></textarea>
       </div>
@@ -353,7 +353,7 @@ const handleBlur = () => {
           <div
             v-for="(param, index) in selectedStep.parameters"
             :key="index"
-            class="p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600"
+            class="p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600"
           >
             <div class="flex items-start justify-between mb-2">
               <div class="flex-1 grid grid-cols-2 gap-2">
@@ -362,12 +362,12 @@ const handleBlur = () => {
                   :value="param.name"
                   @input="(e) => updateParameter(index, 'name', (e.target as HTMLInputElement).value)"
                   placeholder="Parameter name"
-                  class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  class="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
                 />
                 <select
                   :value="param.in"
                   @change="(e) => updateParameter(index, 'in', (e.target as HTMLSelectElement).value)"
-                  class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                  class="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
                 >
                   <option value="path">Path</option>
                   <option value="query">Query</option>
@@ -391,7 +391,7 @@ const handleBlur = () => {
               :value="param.value"
               @input="(e) => updateParameter(index, 'value', (e.target as HTMLInputElement).value)"
               placeholder="Value (e.g., $inputs.userId, literal value)"
-              class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+              class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>

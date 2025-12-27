@@ -6,7 +6,7 @@ import ThemeToggle from './components/theme/ThemeToggle.vue'
 </script>
 
 <template>
-  <div class="flex h-screen w-screen bg-gray-50 dark:bg-gray-900">
+  <div class="flex h-screen w-screen bg-gray-50 dark:bg-slate-950">
     <!-- Main Canvas Area -->
     <div class="flex-1 relative">
       <!-- Theme Toggle - positioned at top-right -->
@@ -17,9 +17,9 @@ import ThemeToggle from './components/theme/ThemeToggle.vue'
     </div>
 
     <!-- Right Sidebar -->
-    <div class="w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700 flex flex-col">
+    <div class="w-80 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-700 flex flex-col">
       <!-- Source Manager Section -->
-      <div class="border-b border-gray-200 dark:border-gray-700">
+      <div class="border-b border-gray-200 dark:border-slate-700">
         <SourceManager />
       </div>
 

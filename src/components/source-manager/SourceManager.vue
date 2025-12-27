@@ -48,14 +48,14 @@ const cancelAdd = () => {
     </div>
 
     <!-- Add Source Form -->
-    <div v-if="showAddForm" class="mb-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600">
+    <div v-if="showAddForm" class="mb-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600">
       <div class="space-y-2">
         <div>
           <input
             v-model="newSource.name"
             type="text"
             placeholder="Source name"
-            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
           />
         </div>
         <div>
@@ -63,13 +63,13 @@ const cancelAdd = () => {
             v-model="newSource.url"
             type="text"
             placeholder="URL or path"
-            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
           />
         </div>
         <div>
           <select
             v-model="newSource.type"
-            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
           >
             <option value="openapi">OpenAPI</option>
             <option value="arazzo">Arazzo</option>
@@ -84,7 +84,7 @@ const cancelAdd = () => {
           </button>
           <button
             @click="cancelAdd"
-            class="flex-1 px-3 py-1 text-sm bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-gray-500"
+            class="flex-1 px-3 py-1 text-sm bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-slate-600"
           >
             Cancel
           </button>
@@ -101,7 +101,7 @@ const cancelAdd = () => {
       <div
         v-for="source in sources"
         :key="source.name"
-        class="p-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md hover:border-blue-300 dark:hover:border-blue-500 transition-colors"
+        class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-md hover:border-blue-300 dark:hover:border-blue-500 transition-colors"
       >
         <div class="flex items-start justify-between">
           <div class="flex-1 min-w-0">
