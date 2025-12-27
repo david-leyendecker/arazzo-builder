@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, markRaw } from 'vue'
+import { ref, watch, markRaw } from 'vue'
 import { VueFlow, useVueFlow, type Node, type Edge, type Connection } from '@vue-flow/core'
 import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
@@ -45,27 +45,31 @@ const nodeTypes = markRaw({
   criteria: SuccessCriteriaNodeComponent
 } as any)
 
-// Convert workflow store nodes to Vue Flow nodes
-const nodes = computed<Node[]>(() => {
-  return workflowStore.nodes.map(node => ({
+// Use refs for nodes and edges instead of computed
+const nodes = ref<Node[]>([])
+const edges = ref<Edge[]>([])
+
+// Sync nodes from store to Vue Flow
+watch(() => workflowStore.nodes, (newNodes) => {
+  nodes.value = newNodes.map(node => ({
     id: node.id,
     type: node.type,
     position: node.position || { x: 100, y: 100 },
     data: node.data,
     label: node.type
   }))
-})
+}, { immediate: true, deep: true })
 
-// Convert workflow store connections to Vue Flow edges
-const edges = computed<Edge[]>(() => {
-  return workflowStore.connections.map(conn => ({
+// Sync edges from store to Vue Flow
+watch(() => workflowStore.connections, (newConnections) => {
+  edges.value = newConnections.map(conn => ({
     id: conn.id,
     source: conn.source,
     target: conn.target,
     sourceHandle: conn.sourceHandle || 'success',
     targetHandle: conn.targetHandle || 'prev'
   }))
-})
+}, { immediate: true, deep: true })
 
 // Handle YAML export
 const handleExportYAML = () => {
@@ -116,6 +120,16 @@ onConnect((params: Connection) => {
 const onNodeClick = (event: any) => {
   if (event.node) {
     workflowStore.selectNode(event.node.id)
+  }
+}
+
+// Handle node drag end to update positions in store
+const onNodeDragStop = (event: any) => {
+  if (event.node) {
+    const node = workflowStore.nodes.find(n => n.id === event.node.id)
+    if (node) {
+      node.position = event.node.position
+    }
   }
 }
 
@@ -317,6 +331,7 @@ const closeContextMenu = () => {
         @pane-click="onPaneClick"
         @node-context-menu="onNodeContextMenu"
         @pane-context-menu="onPaneContextMenu"
+        @node-drag-stop="onNodeDragStop"
         class="workflow-canvas"
         :default-viewport="{ zoom: 1 }"
         :min-zoom="0.2"

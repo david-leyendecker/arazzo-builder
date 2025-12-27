@@ -4,13 +4,13 @@ MVP for visually creating an Arazzo workflow in a browser app.
 
 ## Overview
 
-Arazzo Builder is a web application for visually creating and editing OpenAPI Arazzo workflows. It provides an intuitive node-based interface powered by Rete.js, allowing users to model complex API sequences and export them as standardized YAML specifications.
+Arazzo Builder is a web application for visually creating and editing OpenAPI Arazzo workflows. It provides an intuitive node-based interface powered by Vue Flow, allowing users to model complex API sequences and export them as standardized YAML specifications.
 
 ## Technology Stack
 
 - **Framework**: Vue.js 3 (Composition API with `<script setup>`)
 - **Language**: TypeScript (Strict Mode)
-- **Node Engine**: Rete.js v2
+- **Node Flow Engine**: Vue Flow v1.48.1
 - **Styling**: Tailwind CSS
 - **State Management**: Pinia
 - **Build Tool**: Vite
@@ -34,8 +34,14 @@ src/
 ├── stores/               # Pinia state stores
 │   ├── workflow.ts       # Workflow state management
 │   └── editor.ts         # Editor state management
-├── rete/                 # Rete.js integration
-│   └── editor.ts         # Editor setup and node definitions
+├── vue-flow/             # Vue Flow custom components
+│   ├── WorkflowNodeComponent.vue
+│   ├── StartNodeComponent.vue
+│   ├── StepNodeComponent.vue
+│   ├── EndNodeComponent.vue
+│   ├── ParameterNodeComponent.vue
+│   ├── SuccessCriteriaNodeComponent.vue
+│   └── ContextMenu.vue   # Custom context menu
 ├── types/                # TypeScript type definitions
 │   └── arazzo.ts         # Arazzo specification types
 ├── App.vue               # Main application component
@@ -90,9 +96,9 @@ npm run preview
 ## Development Roadmap
 
 ### Phase 1: Core & Context Logic ✓
-- ✓ Setup Vue 3 + Vite + TS + Rete.js
-- ✓ Implementation of Context-Menu Plugin
-- ✓ Basic node types (Start, Step, End)
+- ✓ Setup Vue 3 + Vite + TS + Vue Flow
+- ✓ Implementation of Context Menu
+- ✓ Basic node types (Start, Step, End, Workflow, Parameter, Success Criteria)
 
 ### Phase 2: Arazzo Validation & YAML ✓
 - ✓ Mapping visual connections to onSuccess/onFailure paths
