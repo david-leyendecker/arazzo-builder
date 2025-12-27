@@ -1,0 +1,55 @@
+arazzo: 1.0.0
+info:
+  title: Sample User Management Workflow
+  version: 1.0.0
+  description: Example workflow demonstrating user creation and verification
+sourceDescriptions:
+  - name: user-api
+    url: https://api.example.com/openapi.yaml
+    type: openapi
+workflows:
+  - workflowId: create-and-verify-user
+    summary: Create a new user and verify their email
+    description: This workflow creates a user account and sends a verification email
+    steps:
+      - stepId: create-user
+        operationId: createUser
+        description: Create a new user account
+        parameters:
+          - name: username
+            in: body
+            value: $inputs.username
+          - name: email
+            in: body
+            value: $inputs.email
+        onSuccess:
+          - type: step
+            stepId: send-verification
+        onFailure:
+          - type: end
+      - stepId: send-verification
+        operationId: sendVerificationEmail
+        description: Send verification email to the user
+        parameters:
+          - name: userId
+            in: path
+            value: $steps.create-user.outputs.userId
+          - name: email
+            in: body
+            value: $inputs.email
+        onSuccess:
+          - type: end
+        onFailure:
+          - type: step
+            stepId: rollback-user
+      - stepId: rollback-user
+        operationId: deleteUser
+        description: Delete user if verification fails
+        parameters:
+          - name: userId
+            in: path
+            value: $steps.create-user.outputs.userId
+        onSuccess:
+          - type: end
+        onFailure:
+          - type: end

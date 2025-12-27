@@ -5,7 +5,22 @@ import { useWorkflowStore } from '../../stores/workflow'
 const workflowStore = useWorkflowStore()
 
 const selectedNode = computed(() => workflowStore.selectedNode)
-const hasSelection = computed(() => selectedNode.value !== null)
+const selectedStep = computed(() => workflowStore.selectedStep)
+const hasSelection = computed(() => selectedNode.value !== null && selectedNode.value.type === 'step')
+
+const updateOperationId = (event: Event) => {
+  const value = (event.target as HTMLInputElement).value
+  if (selectedNode.value) {
+    workflowStore.updateNode(selectedNode.value.id, { operationId: value })
+  }
+}
+
+const updateDescription = (event: Event) => {
+  const value = (event.target as HTMLTextAreaElement).value
+  if (selectedNode.value) {
+    workflowStore.updateNode(selectedNode.value.id, { description: value })
+  }
+}
 </script>
 
 <template>
@@ -26,7 +41,7 @@ const hasSelection = computed(() => selectedNode.value !== null)
         <label class="block text-sm font-medium text-gray-700 mb-1">Step ID</label>
         <input
           type="text"
-          :value="selectedNode?.stepId"
+          :value="selectedStep?.stepId"
           readonly
           class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
         />
@@ -36,7 +51,8 @@ const hasSelection = computed(() => selectedNode.value !== null)
         <label class="block text-sm font-medium text-gray-700 mb-1">Operation ID</label>
         <input
           type="text"
-          :value="selectedNode?.operationId"
+          :value="selectedStep?.operationId"
+          @input="updateOperationId"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="e.g., getUserById"
         />
@@ -45,7 +61,8 @@ const hasSelection = computed(() => selectedNode.value !== null)
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
         <textarea
-          :value="selectedNode?.description || ''"
+          :value="selectedStep?.description || ''"
+          @input="updateDescription"
           rows="3"
           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           placeholder="Describe this step..."
