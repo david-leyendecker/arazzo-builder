@@ -61,6 +61,13 @@ const handleOperationIdInput = (event: Event) => {
   
   if (selectedNode.value) {
     workflowStore.updateNode(selectedNode.value.id, { operationId: value })
+    
+    // Validate the operationId on input
+    if (value && hasOpenAPISpecs.value) {
+      operationIdValidation.value = workflowStore.validateOperationId(value)
+    } else {
+      operationIdValidation.value = null
+    }
   }
 }
 
