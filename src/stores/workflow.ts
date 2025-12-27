@@ -1,6 +1,8 @@
 import { defineStore } from 'pinia'
 import yaml from 'js-yaml'
 import type { ArazzoWorkflow, ArazzoSourceDescription, ArazzoStep, ArazzoCriterionTarget, WorkflowNode, WorkflowConnection } from '../types/arazzo'
+import type { ParsedOpenAPISpec } from '../services/openapi-service'
+import { fetchOpenAPISpec } from '../services/openapi-service'
 
 /**
  * Store for managing the Arazzo workflow state
@@ -27,7 +29,10 @@ export const useWorkflowStore = defineStore('workflow', {
     nodes: [] as WorkflowNode[],
     connections: [] as WorkflowConnection[],
     selectedNodeId: null as string | null,
-    selectedSourceId: null as string | null
+    selectedSourceId: null as string | null,
+    parsedSpecs: [] as ParsedOpenAPISpec[],
+    loadingSpecs: new Set<string>(),
+    specErrors: {} as Record<string, string>
   }),
 
   getters: {
@@ -47,7 +52,13 @@ export const useWorkflowStore = defineStore('workflow', {
       ) || null
     },
 
-    sourceDescriptions: (state) => state.workflow.sourceDescriptions
+    sourceDescriptions: (state) => state.workflow.sourceDescriptions,
+
+    allOperations: (state) => {
+      return state.parsedSpecs.flatMap(spec => spec.operations)
+    },
+
+    isLoadingSpecs: (state) => state.loadingSpecs.size > 0
   },
 
   actions: {
@@ -61,6 +72,11 @@ export const useWorkflowStore = defineStore('workflow', {
 
     addSourceDescription(source: ArazzoSourceDescription) {
       this.workflow.sourceDescriptions.push(source)
+      
+      // Automatically fetch and parse the spec if it's an OpenAPI source
+      if (source.type === 'openapi' && source.url) {
+        this.loadOpenAPISpec(source.name, source.url)
+      }
     },
 
     removeSourceDescription(name: string) {
@@ -68,6 +84,15 @@ export const useWorkflowStore = defineStore('workflow', {
       if (index !== -1) {
         this.workflow.sourceDescriptions.splice(index, 1)
       }
+      
+      // Remove the parsed spec
+      const specIndex = this.parsedSpecs.findIndex(s => s.sourceName === name)
+      if (specIndex !== -1) {
+        this.parsedSpecs.splice(specIndex, 1)
+      }
+      
+      // Remove any errors
+      delete this.specErrors[name]
     },
 
     addNode(node: WorkflowNode) {
@@ -222,6 +247,12 @@ export const useWorkflowStore = defineStore('workflow', {
       workflow.steps.forEach(step => {
         if (!step.operationId || step.operationId.trim() === '') {
           errors.push(`Step "${step.stepId}" is missing an operationId`)
+        } else if (this.parsedSpecs.length > 0) {
+          // Validate against OpenAPI specs only if specs are available
+          const validation = this.validateOperationId(step.operationId)
+          if (!validation.valid) {
+            errors.push(`Step "${step.stepId}": ${validation.error}`)
+          }
         }
       })
       
@@ -295,6 +326,60 @@ export const useWorkflowStore = defineStore('workflow', {
         lineWidth: -1,
         noRefs: true
       })
+    },
+
+    /**
+     * Load and parse an OpenAPI specification
+     */
+    async loadOpenAPISpec(sourceName: string, url: string) {
+      this.loadingSpecs.add(sourceName)
+      delete this.specErrors[sourceName]
+      
+      try {
+        const parsedSpec = await fetchOpenAPISpec(url, sourceName)
+        
+        // Remove existing spec if present
+        const existingIndex = this.parsedSpecs.findIndex(s => s.sourceName === sourceName)
+        if (existingIndex !== -1) {
+          this.parsedSpecs.splice(existingIndex, 1)
+        }
+        
+        // Add the new spec
+        this.parsedSpecs.push(parsedSpec)
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+        this.specErrors[sourceName] = errorMessage
+        console.error(`Failed to load spec ${sourceName}:`, error)
+      } finally {
+        this.loadingSpecs.delete(sourceName)
+      }
+    },
+
+    /**
+     * Find an operation by operationId
+     */
+    findOperation(operationId: string) {
+      for (const spec of this.parsedSpecs) {
+        const operation = spec.operations.find(op => op.operationId === operationId)
+        if (operation) return operation
+      }
+      return null
+    },
+
+    /**
+     * Validate that an operationId exists in the loaded specs
+     */
+    validateOperationId(operationId: string): { valid: boolean; error?: string } {
+      if (!operationId) {
+        return { valid: false, error: 'Operation ID is required' }
+      }
+      
+      const operation = this.findOperation(operationId)
+      if (!operation) {
+        return { valid: false, error: 'Operation ID not found in any source' }
+      }
+      
+      return { valid: true }
     }
   }
 })
