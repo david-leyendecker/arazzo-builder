@@ -1,29 +1,88 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-import { useEditorStore } from '../../stores/editor'
+import { ref, watch, markRaw } from 'vue'
+import { VueFlow, useVueFlow, type Node, type Edge, type Connection } from '@vue-flow/core'
+import { Background } from '@vue-flow/background'
+import { Controls } from '@vue-flow/controls'
+import { MiniMap } from '@vue-flow/minimap'
 import { useWorkflowStore } from '../../stores/workflow'
-import { createEditor, addNode, StartNode, StepNode, EndNode, WorkflowNode, ParameterNode, SuccessCriteriaNode } from '../../rete/editor'
 import type { ArazzoStep } from '../../types/arazzo'
+import WorkflowNodeComponent from '../../vue-flow/WorkflowNodeComponent.vue'
+import StartNodeComponent from '../../vue-flow/StartNodeComponent.vue'
+import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
+import EndNodeComponent from '../../vue-flow/EndNodeComponent.vue'
+import ParameterNodeComponent from '../../vue-flow/ParameterNodeComponent.vue'
+import SuccessCriteriaNodeComponent from '../../vue-flow/SuccessCriteriaNodeComponent.vue'
+import ContextMenu from '../../vue-flow/ContextMenu.vue'
+import type { ContextMenuItem } from '../../vue-flow/ContextMenu.vue'
 
-const editorStore = useEditorStore()
+// Import Vue Flow styles
+import '@vue-flow/core/dist/style.css'
+import '@vue-flow/core/dist/theme-default.css'
+import '@vue-flow/controls/dist/style.css'
+import '@vue-flow/minimap/dist/style.css'
+
 const workflowStore = useWorkflowStore()
-const canvasContainer = ref<HTMLElement | null>(null)
-let editorInstance: any = null
 
+// Context menu state
+const contextMenu = ref({
+  visible: false,
+  x: 0,
+  y: 0,
+  items: [] as ContextMenuItem[],
+  nodeId: null as string | null
+})
+
+// Vue Flow composable
+const { onConnect, project } = useVueFlow()
+
+// Node types mapping - use markRaw to prevent Vue reactivity on components
+const nodeTypes = markRaw({
+  workflow: WorkflowNodeComponent,
+  start: StartNodeComponent,
+  step: StepNodeComponent,
+  end: EndNodeComponent,
+  parameter: ParameterNodeComponent,
+  criteria: SuccessCriteriaNodeComponent
+} as any)
+
+// Use refs for nodes and edges instead of computed
+const nodes = ref<Node[]>([])
+const edges = ref<Edge[]>([])
+
+// Sync nodes from store to Vue Flow
+watch(() => workflowStore.nodes, (newNodes) => {
+  nodes.value = newNodes.map(node => ({
+    id: node.id,
+    type: node.type,
+    position: node.position || { x: 100, y: 100 },
+    data: node.data,
+    label: node.type
+  }))
+}, { immediate: true, deep: true })
+
+// Sync edges from store to Vue Flow
+watch(() => workflowStore.connections, (newConnections) => {
+  edges.value = newConnections.map(conn => ({
+    id: conn.id,
+    source: conn.source,
+    target: conn.target,
+    sourceHandle: conn.sourceHandle || 'success',
+    targetHandle: conn.targetHandle || 'prev'
+  }))
+}, { immediate: true, deep: true })
+
+// Handle YAML export
 const handleExportYAML = () => {
   try {
     const validation = workflowStore.validateWorkflow()
     
     if (!validation.valid) {
-      // Show validation errors
-      const errorMessage = 'Workflow validation failed:\n\n' + validation.errors.join('\n')
-      alert(errorMessage)
+      alert('Workflow validation failed:\n\n' + validation.errors.join('\n'))
       return
     }
     
     const yamlContent = workflowStore.exportToYAML()
     
-    // Download the YAML file
     const blob = new Blob([yamlContent], { type: 'text/yaml' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -42,149 +101,207 @@ const handleExportYAML = () => {
   }
 }
 
-// Watch for OpenAPI spec loading to auto-create workflow node
-watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) => {
-  console.log('Watch triggered:', { newVal, oldVal, hasEditor: !!editorInstance })
+// Handle connections between nodes
+onConnect((params: Connection) => {
+  if (!params.source || !params.target) return
   
-  if (newVal && newVal !== oldVal) {
-    // Wait for editor to be ready if it's not yet
-    if (!editorInstance) {
-      console.warn('Editor not ready yet, waiting...')
-      // Retry after a short delay
-      setTimeout(async () => {
-        if (editorInstance) {
-          await createWorkflowNode()
-        }
-      }, 500)
-      return
-    }
-    
-    await createWorkflowNode()
-  }
-}, { flush: 'post' })
+  const connectionId = `${params.source}-${params.target}-${Date.now()}`
+  
+  workflowStore.addConnection({
+    id: connectionId,
+    source: params.source,
+    target: params.target,
+    sourceHandle: params.sourceHandle || undefined,
+    targetHandle: params.targetHandle || undefined
+  })
+})
 
-async function createWorkflowNode() {
-  if (!editorInstance) return
-  
-  // Check if workflow node already exists
-  const hasWorkflowNode = workflowStore.nodes.some(n => (n.type as string) === 'workflow')
-  
-  console.log('Creating workflow node:', { hasWorkflowNode })
-  
-  if (!hasWorkflowNode) {
-    const workflowNode = new WorkflowNode('workflow-root', 'main-workflow')
-    await addNode(
-      editorInstance.editor,
-      editorInstance.area,
-      workflowNode,
-      { x: 100, y: 100 }
-    )
-    
-    console.log('Workflow node created successfully')
+// Handle node selection
+const onNodeClick = (event: any) => {
+  if (event.node) {
+    workflowStore.selectNode(event.node.id)
   }
 }
 
-onMounted(async () => {
-  if (canvasContainer.value) {
-    try {
-      // Initialize the Rete.js editor
-      editorInstance = await createEditor(canvasContainer.value)
-      editorStore.setEditor(editorInstance.editor)
+// Handle node drag end to update positions in store
+const onNodeDragStop = (event: any) => {
+  if (event.node) {
+    const node = workflowStore.nodes.find(n => n.id === event.node.id)
+    if (node) {
+      node.position = event.node.position
+    }
+  }
+}
 
-      // Listen for node additions
-      editorInstance.editor.addPipe((context: any) => {
-        if (context.type === 'nodeadded') {
-          const node = context.data
-          const nodeType = node instanceof StartNode ? 'start' 
-                         : node instanceof StepNode ? 'step'
-                         : node instanceof WorkflowNode ? 'workflow'
-                         : node instanceof ParameterNode ? 'parameter'
-                         : node instanceof SuccessCriteriaNode ? 'criteria'
-                         : 'end'
-          
-          const workflowNode = {
-            id: node.id,
-            type: nodeType as any,
-            data: nodeType === 'step' 
-              ? {
-                  stepId: (node as StepNode).stepId,
-                  operationId: (node as StepNode).operationId || '',
-                  description: '',
-                  parameters: [],
-                  successCriteria: []
-                } as ArazzoStep
-              : nodeType === 'workflow'
-              ? { workflowId: (node as WorkflowNode).workflowId }
-              : nodeType === 'parameter'
-              ? { 
-                  name: (node as ParameterNode).parameterName,
-                  in: (node as ParameterNode).parameterIn,
-                  value: (node as ParameterNode).parameterValue
-                }
-              : nodeType === 'criteria'
-              ? { criteria: (node as SuccessCriteriaNode).criteria }
-              : {}
-          }
-          
-          workflowStore.addNode(workflowNode)
-        }
-        
-        if (context.type === 'noderemoved') {
-          const node = context.data
-          workflowStore.removeNode(node.id)
-        }
-        
-        if (context.type === 'connectionadded') {
-          const conn = context.data
-          const sourceKey = conn.sourceOutput
-          const targetKey = conn.targetInput
-          
-          workflowStore.addConnection({
-            id: conn.id,
-            source: conn.source,
-            target: conn.target,
-            sourceHandle: sourceKey,
-            targetHandle: targetKey
-          })
-        }
-        
-        if (context.type === 'connectionremoved') {
-          const conn = context.data
-          workflowStore.removeConnection(conn.id)
-        }
-        
-        return context
-      })
+// Handle pane click (deselect nodes)
+const onPaneClick = () => {
+  workflowStore.selectNode(null)
+  contextMenu.value.visible = false
+}
 
-      // Listen for node selection
-      editorInstance.area.addPipe((context: any) => {
-        if (context.type === 'nodepicked') {
-          const nodeId = context.data.id
-          workflowStore.selectNode(nodeId)
-        }
-        return context
-      })
+// Handle right-click context menu
+const onNodeContextMenu = (event: any) => {
+  event.event.preventDefault()
+  
+  const node = event.node
+  contextMenu.value.nodeId = node.id
+  contextMenu.value.x = event.event.clientX
+  contextMenu.value.y = event.event.clientY
+  contextMenu.value.items = getContextMenuItems(node.type, node.id)
+  contextMenu.value.visible = true
+}
 
-      // Fit the view to show all nodes
-      await editorInstance.area.area.zoom(1)
-      
-      // Check if there are already loaded specs (in case they were loaded before mount)
-      if (workflowStore.parsedSpecs.length > 0 && !workflowStore.nodes.some(n => (n.type as string) === 'workflow')) {
-        console.log('Specs already loaded, creating workflow node')
-        await createWorkflowNode()
+const onPaneContextMenu = (event: MouseEvent) => {
+  event.preventDefault()
+  
+  contextMenu.value.nodeId = null
+  contextMenu.value.x = event.clientX
+  contextMenu.value.y = event.clientY
+  contextMenu.value.items = getContextMenuItems('root', null)
+  contextMenu.value.visible = true
+}
+
+// Get context menu items based on node type
+const getContextMenuItems = (nodeType: string, nodeId: string | null): ContextMenuItem[] => {
+  const items: ContextMenuItem[] = []
+  
+  if (nodeType === 'root') {
+    // Root context (empty canvas)
+    items.push({
+      label: 'Add Workflow',
+      key: 'workflow',
+      handler: () => addNodeAtCursor('workflow')
+    })
+    items.push({
+      label: 'Add Start Node',
+      key: 'start',
+      handler: () => addNodeAtCursor('start')
+    })
+    items.push({
+      label: 'Add End Node',
+      key: 'end',
+      handler: () => addNodeAtCursor('end')
+    })
+  } else if (nodeType === 'workflow' && nodeId) {
+    items.push({
+      label: 'Add Step',
+      key: 'step',
+      handler: () => addChildNode(nodeId, 'step')
+    })
+  } else if (nodeType === 'step' && nodeId) {
+    items.push({
+      label: 'Add Parameter',
+      key: 'parameter',
+      handler: () => addChildNode(nodeId, 'parameter')
+    })
+    items.push({
+      label: 'Add Success Criteria',
+      key: 'criteria',
+      handler: () => addChildNode(nodeId, 'criteria')
+    })
+    items.push({
+      label: 'Add Next Step',
+      key: 'next-step',
+      handler: () => addChildNode(nodeId, 'step')
+    })
+  }
+  
+  return items
+}
+
+// Add node at cursor position
+const addNodeAtCursor = (nodeType: string) => {
+  const timestamp = Date.now()
+  const id = `${nodeType}-${timestamp}`
+  
+  // Get the position relative to the flow
+  const position = project({ x: contextMenu.value.x, y: contextMenu.value.y })
+  
+  const nodeData = createNodeData(nodeType, id)
+  
+  workflowStore.addNode({
+    id,
+    type: nodeType as any,
+    data: nodeData,
+    position
+  })
+}
+
+// Add child node relative to parent
+const addChildNode = (parentId: string, nodeType: string) => {
+  const timestamp = Date.now()
+  const id = `${nodeType}-${timestamp}`
+  
+  // Find parent node position
+  const parentNode = workflowStore.nodes.find(n => n.id === parentId)
+  const parentPosition = parentNode?.position || { x: 100, y: 100 }
+  
+  // Calculate child position relative to parent
+  const offsetY = nodeType === 'parameter' ? -100 : nodeType === 'criteria' ? 100 : 0
+  const position = {
+    x: parentPosition.x + 250,
+    y: parentPosition.y + offsetY
+  }
+  
+  const nodeData = createNodeData(nodeType, id)
+  
+  workflowStore.addNode({
+    id,
+    type: nodeType as any,
+    data: nodeData,
+    position
+  })
+}
+
+// Create node data based on type
+const createNodeData = (nodeType: string, id: string): any => {
+  switch (nodeType) {
+    case 'workflow':
+      return { workflowId: id }
+    case 'step':
+      return {
+        stepId: id,
+        operationId: '',
+        description: '',
+        parameters: [],
+        successCriteria: []
+      } as ArazzoStep
+    case 'parameter':
+      return {
+        name: '',
+        in: 'query',
+        value: ''
       }
-    } catch (error) {
-      console.error('Failed to initialize editor:', error)
+    case 'criteria':
+      return {
+        criteria: ''
+      }
+    default:
+      return {}
+  }
+}
+
+// Watch for OpenAPI spec loading to auto-create workflow node
+watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) => {
+  if (newVal && newVal !== oldVal) {
+    // Check if workflow node already exists
+    const hasWorkflowNode = workflowStore.nodes.some(n => n.type === 'workflow')
+    
+    if (!hasWorkflowNode) {
+      workflowStore.addNode({
+        id: 'workflow-root',
+        type: 'workflow',
+        data: { workflowId: 'main-workflow' },
+        position: { x: 100, y: 100 }
+      })
     }
   }
 })
 
-onBeforeUnmount(() => {
-  if (editorInstance) {
-    editorInstance.destroy()
-    editorStore.clearEditor()
-  }
-})
+// Close context menu
+const closeContextMenu = () => {
+  contextMenu.value.visible = false
+}
 </script>
 
 <template>
@@ -204,11 +321,39 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- Canvas Container -->
-    <div ref="canvasContainer" class="workflow-canvas absolute top-16 left-0 right-0 bottom-0 bg-gray-50"></div>
+    <!-- Vue Flow Canvas -->
+    <div class="absolute top-16 left-0 right-0 bottom-0">
+      <VueFlow
+        v-model:nodes="nodes"
+        v-model:edges="edges"
+        :node-types="nodeTypes"
+        @node-click="onNodeClick"
+        @pane-click="onPaneClick"
+        @node-context-menu="onNodeContextMenu"
+        @pane-context-menu="onPaneContextMenu"
+        @node-drag-stop="onNodeDragStop"
+        class="workflow-canvas"
+        :default-viewport="{ zoom: 1 }"
+        :min-zoom="0.2"
+        :max-zoom="4"
+      >
+        <Background pattern-color="#aaa" :gap="20" />
+        <Controls />
+        <MiniMap />
+      </VueFlow>
+    </div>
+
+    <!-- Context Menu -->
+    <ContextMenu
+      :visible="contextMenu.visible"
+      :x="contextMenu.x"
+      :y="contextMenu.y"
+      :items="contextMenu.items"
+      @close="closeContextMenu"
+    />
 
     <!-- Help Text -->
-    <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600">
+    <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 z-10">
       <p class="font-medium mb-1">Quick Tips:</p>
       <ul class="space-y-1">
         <li>• Right-click on canvas to add nodes</li>

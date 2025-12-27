@@ -176,19 +176,19 @@ const handleBlur = () => {
     <!-- Node Details -->
     <div v-else class="space-y-4">
       <!-- Node Type Badge -->
-      <div class="mb-3">
+      <div v-if="selectedNode" class="mb-3">
         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
           {{ selectedNode.type }}
         </span>
       </div>
 
       <!-- Workflow Node -->
-      <div v-if="isWorkflowNode">
+      <div v-if="isWorkflowNode && selectedNode">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Workflow ID</label>
           <input
             type="text"
-            :value="selectedNode.data.workflowId"
+            :value="(selectedNode.data as { workflowId: string }).workflowId"
             readonly
             class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
           />
@@ -197,7 +197,7 @@ const handleBlur = () => {
       </div>
 
       <!-- Start/End Node -->
-      <div v-else-if="isStartOrEndNode">
+      <div v-else-if="isStartOrEndNode && selectedNode">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Node ID</label>
           <input
@@ -213,12 +213,12 @@ const handleBlur = () => {
       </div>
 
       <!-- Parameter Node -->
-      <div v-else-if="isParameterNode">
+      <div v-else-if="isParameterNode && selectedNode">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Parameter Name</label>
           <input
             type="text"
-            :value="selectedNode.data.name"
+            :value="(selectedNode.data as { name: string }).name"
             readonly
             class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
           />
@@ -227,7 +227,7 @@ const handleBlur = () => {
           <label class="block text-sm font-medium text-gray-700 mb-1 mt-3">Location</label>
           <input
             type="text"
-            :value="selectedNode.data.in"
+            :value="(selectedNode.data as { in: string }).in"
             readonly
             class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
           />
@@ -236,7 +236,7 @@ const handleBlur = () => {
           <label class="block text-sm font-medium text-gray-700 mb-1 mt-3">Value</label>
           <input
             type="text"
-            :value="selectedNode.data.value"
+            :value="(selectedNode.data as { value: string }).value"
             readonly
             class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
           />
@@ -245,12 +245,12 @@ const handleBlur = () => {
       </div>
 
       <!-- Criteria Node -->
-      <div v-else-if="isCriteriaNode">
+      <div v-else-if="isCriteriaNode && selectedNode">
         <div>
           <label class="block text-sm font-medium text-gray-700 mb-1">Criteria Expression</label>
           <input
             type="text"
-            :value="selectedNode.data.criteria"
+            :value="(selectedNode.data as { criteria: string }).criteria"
             readonly
             class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
           />

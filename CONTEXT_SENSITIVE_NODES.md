@@ -72,24 +72,24 @@ The right-click context menu adapts based on what you click:
 
 ## Programmatic API
 
-The editor instance now exposes an `addChildNode` method:
+The workflow store provides methods to add nodes programmatically:
 
 ```typescript
-editorInstance.addChildNode(parentNodeId, childType)
+// Add a node to the workflow
+workflowStore.addNode({
+  id: 'unique-id',
+  type: 'step', // 'workflow' | 'start' | 'step' | 'end' | 'parameter' | 'criteria'
+  data: { /* node-specific data */ },
+  position: { x: 100, y: 100 }
+})
 ```
-
-Parameters:
-- `parentNodeId`: The ID of the parent node
-- `childType`: One of `'parameter'`, `'criteria'`, or `'step'`
-
-This can be used to create custom UI buttons for adding children.
 
 ## Architecture
 
 ### Key Files
 
-- **`src/rete/editor.ts`**: Node class definitions and context menu logic
-- **`src/components/workflow/WorkflowCanvas.vue`**: Canvas component with auto-creation watcher
+- **`src/vue-flow/`**: Custom Vue Flow node components and context menu
+- **`src/components/workflow/WorkflowCanvas.vue`**: Canvas component with Vue Flow integration
 - **`src/stores/workflow.ts`**: State management with OpenAPI trigger
 - **`src/types/arazzo.ts`**: TypeScript type definitions
 
