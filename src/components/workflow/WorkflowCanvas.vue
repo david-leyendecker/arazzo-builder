@@ -1,11 +1,43 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useEditorStore } from '../../stores/editor'
-import { createEditor, addNode, StartNode, EndNode } from '../../rete/editor'
+import { useWorkflowStore } from '../../stores/workflow'
+import { createEditor, addNode, StartNode, StepNode, EndNode } from '../../rete/editor'
+import type { ArazzoStep } from '../../types/arazzo'
 
 const editorStore = useEditorStore()
+const workflowStore = useWorkflowStore()
 const canvasContainer = ref<HTMLElement | null>(null)
 let editorInstance: any = null
+
+const handleExportYAML = () => {
+  try {
+    const validation = workflowStore.validateWorkflow()
+    
+    if (!validation.valid) {
+      alert('Workflow validation failed:\n\n' + validation.errors.join('\n'))
+      return
+    }
+    
+    const yamlContent = workflowStore.exportToYAML()
+    
+    // Download the YAML file
+    const blob = new Blob([yamlContent], { type: 'text/yaml' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${workflowStore.workflow.info.title.replace(/\s+/g, '-').toLowerCase()}.arazzo.yaml`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    
+    alert('YAML file exported successfully!')
+  } catch (error) {
+    console.error('Export failed:', error)
+    alert('Failed to export YAML: ' + (error as Error).message)
+  }
+}
 
 onMounted(async () => {
   if (canvasContainer.value) {
@@ -14,20 +46,99 @@ onMounted(async () => {
       editorInstance = await createEditor(canvasContainer.value)
       editorStore.setEditor(editorInstance.editor)
 
+      // Listen for node additions
+      editorInstance.editor.addPipe((context: any) => {
+        if (context.type === 'nodeadded') {
+          const node = context.data
+          const nodeType = node instanceof StartNode ? 'start' 
+                         : node instanceof StepNode ? 'step' 
+                         : 'end'
+          
+          const workflowNode = {
+            id: node.id,
+            type: nodeType as 'start' | 'step' | 'end',
+            data: nodeType === 'step' 
+              ? {
+                  stepId: (node as StepNode).stepId,
+                  operationId: (node as StepNode).operationId || '',
+                  description: '',
+                  parameters: [],
+                  successCriteria: []
+                } as ArazzoStep
+              : {}
+          }
+          
+          console.log('Node added to Rete:', node.id, nodeType)
+          workflowStore.addNode(workflowNode)
+        }
+        
+        if (context.type === 'noderemoved') {
+          const node = context.data
+          workflowStore.removeNode(node.id)
+        }
+        
+        if (context.type === 'connectionadded') {
+          const conn = context.data
+          const sourceKey = conn.sourceOutput
+          const targetKey = conn.targetInput
+          
+          console.log('Connection added:', conn.id, sourceKey, '->', targetKey)
+          workflowStore.addConnection({
+            id: conn.id,
+            source: conn.source,
+            target: conn.target,
+            sourceHandle: sourceKey,
+            targetHandle: targetKey
+          })
+        }
+        
+        if (context.type === 'connectionremoved') {
+          const conn = context.data
+          workflowStore.removeConnection(conn.id)
+        }
+        
+        return context
+      })
+
+      // Listen for node selection
+      editorInstance.area.addPipe((context: any) => {
+        if (context.type === 'nodepicked') {
+          const nodeId = context.data.id
+          workflowStore.selectNode(nodeId)
+        }
+        return context
+      })
+
       // Add initial Start and End nodes
+      const startNode = new StartNode('start-1')
       await addNode(
         editorInstance.editor,
         editorInstance.area,
-        new StartNode('start-1'),
+        startNode,
         { x: 100, y: 200 }
       )
+      
+      // Manually add start node to workflow store
+      workflowStore.addNode({
+        id: 'start-1',
+        type: 'start',
+        data: {}
+      })
 
+      const endNode = new EndNode('end-1')
       await addNode(
         editorInstance.editor,
         editorInstance.area,
-        new EndNode('end-1'),
+        endNode,
         { x: 600, y: 200 }
       )
+      
+      // Manually add end node to workflow store
+      workflowStore.addNode({
+        id: 'end-1',
+        type: 'end',
+        data: {}
+      })
 
       // Fit the view to show all nodes
       await editorInstance.area.area.zoom(1)
@@ -52,7 +163,10 @@ onBeforeUnmount(() => {
       <div class="flex items-center justify-between">
         <h1 class="text-xl font-semibold text-gray-800">Arazzo Workflow Builder</h1>
         <div class="flex gap-2">
-          <button class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+          <button 
+            @click="handleExportYAML"
+            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+          >
             Export YAML
           </button>
         </div>
