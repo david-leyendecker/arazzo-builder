@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import yaml from 'js-yaml'
-import type { ArazzoWorkflow, ArazzoSourceDescription, ArazzoStep, WorkflowNode, WorkflowConnection } from '../types/arazzo'
+import type { ArazzoWorkflow, ArazzoSourceDescription, ArazzoStep, ArazzoCriterionTarget, WorkflowNode, WorkflowConnection } from '../types/arazzo'
 
 /**
  * Store for managing the Arazzo workflow state
@@ -171,10 +171,10 @@ export const useWorkflowStore = defineStore('workflow', {
         
         const sourceHandle = conn.sourceHandle || 'success'
         
-        const target = {
+        const target: ArazzoCriterionTarget = {
           type: targetNode?.type === 'end' ? 'end' : 'step',
           stepId: targetNode?.type === 'step' ? conn.target : undefined
-        } as any
+        }
         
         if (sourceHandle === 'success') {
           if (!step.onSuccess) step.onSuccess = []
@@ -264,7 +264,7 @@ export const useWorkflowStore = defineStore('workflow', {
           description: w.description,
           ...(w.inputs && Object.keys(w.inputs).length > 0 ? { inputs: w.inputs } : {}),
           steps: w.steps.map(step => {
-            const cleanStep: any = {
+            const cleanStep: Partial<ArazzoStep> = {
               stepId: step.stepId,
               operationId: step.operationId
             }
@@ -283,7 +283,7 @@ export const useWorkflowStore = defineStore('workflow', {
               cleanStep.onFailure = step.onFailure
             }
             
-            return cleanStep
+            return cleanStep as ArazzoStep
           }),
           ...(w.outputs && Object.keys(w.outputs).length > 0 ? { outputs: w.outputs } : {})
         }))

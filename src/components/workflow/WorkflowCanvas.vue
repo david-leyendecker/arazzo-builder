@@ -15,7 +15,9 @@ const handleExportYAML = () => {
     const validation = workflowStore.validateWorkflow()
     
     if (!validation.valid) {
-      alert('Workflow validation failed:\n\n' + validation.errors.join('\n'))
+      // Show validation errors
+      const errorMessage = 'Workflow validation failed:\n\n' + validation.errors.join('\n')
+      alert(errorMessage)
       return
     }
     
@@ -35,7 +37,8 @@ const handleExportYAML = () => {
     alert('YAML file exported successfully!')
   } catch (error) {
     console.error('Export failed:', error)
-    alert('Failed to export YAML: ' + (error as Error).message)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    alert('Failed to export YAML: ' + errorMessage)
   }
 }
 
@@ -68,7 +71,6 @@ onMounted(async () => {
               : {}
           }
           
-          console.log('Node added to Rete:', node.id, nodeType)
           workflowStore.addNode(workflowNode)
         }
         
@@ -82,7 +84,6 @@ onMounted(async () => {
           const sourceKey = conn.sourceOutput
           const targetKey = conn.targetInput
           
-          console.log('Connection added:', conn.id, sourceKey, '->', targetKey)
           workflowStore.addConnection({
             id: conn.id,
             source: conn.source,
