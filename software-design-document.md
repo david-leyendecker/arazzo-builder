@@ -1,36 +1,36 @@
 # **Software Design Document: Arazzo Workflow Builder**
 
-## **1\. Einleitung**
+## **1\. Introduction**
 
-Dieses Dokument beschreibt das Design für eine Web-Applikation zur visuellen Erstellung und Bearbeitung von **OpenAPI Arazzo** Workflows. Die Anwendung ermöglicht es, komplexe API-Sequenzen visuell zu modellieren und als standardisierte YAML-Spezifikation zu exportieren. Der Fokus liegt auf einer kontextsensitiven Benutzerführung.
+This document outlines the design for a web application dedicated to the visual creation and editing of **OpenAPI Arazzo** workflows. The application enables users to visually model complex API sequences and export them as standardized YAML specifications. The primary focus is on a context-sensitive user experience.
 
-## **2\. Systemarchitektur**
+## **2\. System Architecture**
 
-### **2.1 Frontend-Architektur**
+### **2.1 Frontend Architecture**
 
-Die Applikation wird als moderne Single-Page Application (SPA) realisiert.
+The application is implemented as a modern Single-Page Application (SPA).
 
-* **Framework:** **Vue.js 3** (Composition API mit \<script setup\>).  
-* **Sprache:** **TypeScript** (Strict Mode) für maximale Typsicherheit der Spezifikations-Modelle.  
-* **Node-Engine:** **Rete.js v2**. Diese Engine ermöglicht die Trennung von Datenlogik (Editor) und Rendering (Vue-Plugin).  
-* **Styling:** **Tailwind CSS** für das Interface.  
-* **State Management:** **Pinia** zur Verwaltung globaler Zustände.
+* **Framework:** **Vue.js 3** (Composition API using \<script setup\>).  
+* **Language:** **TypeScript** (Strict Mode) for maximum type safety of specification models.  
+* **Node Engine:** **Rete.js v2**. This engine allows for the separation of data logic (editor) and rendering (Vue plugin).  
+* **Styling:** **Tailwind CSS** for the user interface.  
+* **State Management:** **Pinia** for managing global states.
 
-### **2.2 Architektur-Entscheidungen & Trade-Offs**
+### **2.2 Architectural Decisions & Trade-Offs**
 
-| Faktor | Entscheidung | Trade-Off / Risiko |
+| Factor | Decision | Trade-Off / Risk |
 | :---- | :---- | :---- |
-| **Framework** | **Vue.js 3** | **Ökosystem-Größe:** Im Vergleich zu React ist die Auswahl an vorgefertigten Node-UI-Komponenten kleiner. Wir müssen mehr Custom-Logik für Rete.js-Integration schreiben. |
-| **Node Engine** | **Rete.js v2** | **Lernkurve:** Rete.js v2 ist mächtiger als React Flow, aber auch komplexer in der Initialisierung (Plugins, Sockets, Data-Flow-Engine). |
-| **Sprache** | **TypeScript** | **Initialer Overhead:** Die Definition der komplexen Arazzo-Typen (Nested Objects, JSON-Pfade) erfordert mehr Zeit beim Setup, reduziert aber Laufzeitfehler drastisch. |
-| **Rendering** | **Vue-Render-Plugin** | **Abhängigkeit:** Wir sind auf die Kompatibilität des Rete-Vue-Plugins angewiesen. Bei Major-Updates von Vue kann es hier zu Verzögerungen kommen. |
+| **Framework** | **Vue.js 3** | **Ecosystem Size:** Compared to React, there are fewer pre-built node UI components. More custom logic for Rete.js integration is required. |
+| **Node Engine** | **Rete.js v2** | **Learning Curve:** Rete.js v2 is more powerful than React Flow but also more complex to initialize (plugins, sockets, data-flow engine). |
+| **Language** | **TypeScript** | **Initial Overhead:** Defining complex Arazzo types (nested objects, JSON paths) requires more setup time but drastically reduces runtime errors. |
+| **Rendering** | **Vue-Render-Plugin** | **Dependency:** We rely on the compatibility of the Rete Vue plugin. Major Vue updates might lead to delays in plugin support. |
 
-### **2.3 Warum nicht React oder Vanilla TS?**
+### **2.3 Why not React or Vanilla TS?**
 
-* **Gegen React:** Reacts "One-Way Data Flow" beißt sich oft mit der imperativen Natur von Graph-Engines. Rete.js integriert sich durch seine Plugin-Struktur sehr organisch in Vues reaktives System (Proxy-basiert).  
-* **Gegen Vanilla TS:** Die Komplexität des Property-Panels (Formularvalidierung, dynamische Inputs basierend auf OpenAPI) wäre ohne ein Framework wie Vue extrem wartungsintensiv.
+* **Against React:** React's "One-Way Data Flow" often conflicts with the imperative nature of graph engines. Rete.js integrates organically into Vue's reactive system (proxy-based) through its plugin structure.  
+* **Against Vanilla TS:** The complexity of the property panel (form validation, dynamic inputs based on OpenAPI) would be extremely maintenance-intensive without a framework like Vue.
 
-## **3\. Technisches Datenmodell (TypeScript)**
+## **3\. Technical Data Model (TypeScript)**
 
 interface ArazzoStep {  
   stepId: string;  
@@ -42,34 +42,34 @@ interface ArazzoStep {
   onFailure?: ArazzoCriterionTarget\[\];  
 }
 
-## **4\. Rete.js Integration & Kontextuelle Logik**
+## **4\. Rete.js Integration & Contextual Logic**
 
-Anstatt einer statischen Komponenten-Bibliothek wird ein **kontextsensitiver Erstellungs-Flow** implementiert:
+Instead of a static component library, a **context-sensitive creation flow** is implemented:
 
-1. **Context-Menu Plugin:** Beim Rechtsklick auf den Canvas oder beim Ziehen einer Verbindung in den leeren Raum öffnet sich ein Menü.  
-2. **Socket-Filtering:** Rete.js prüft den Typ des Ausgangs-Sockets. Wenn von einem onSuccess-Port gezogen wird, schlägt das System automatisch neue Steps oder End-Knoten vor.  
-3. **Parent-Child Relation:** Knoten können Unterknoten (z.B. für komplexe inputs oder assertions) direkt über Inline-Buttons am Knoten selbst erzeugen.
+1. **Context-Menu Plugin:** Right-clicking on the canvas or dragging a connection into empty space opens a menu.  
+2. **Socket-Filtering:** Rete.js checks the type of the output socket. If dragging from an onSuccess port, the system automatically suggests new Steps or End nodes.  
+3. **Parent-Child Relation:** Nodes can create child nodes (e.g., for complex inputs or assertions) directly via inline buttons on the node itself.
 
-## **5\. UI/UX Design Komponenten**
+## **5\. UI/UX Design Components**
 
-1. **Workflow Canvas:** Hauptbereich (Rete.js).  
-2. **Contextual Creator:** Ein dynamisches Popup-Menü, das basierend auf dem aktuellen Fokus (z.B. selektierter Node oder gezogene Verbindung) relevante Arazzo-Bausteine anbietet.  
-3. **Contextual Inspector:** Rechtes Panel für detaillierte Attribut-Bearbeitung des selektierten Nodes.  
-4. **Source Manager:** Verwaltung der referenzierten OpenAPI-Dokumente.
+1. **Workflow Canvas:** Main area (Rete.js).  
+2. **Contextual Creator:** A dynamic popup menu that offers relevant Arazzo building blocks based on the current focus (e.g., selected node or active connection).  
+3. **Contextual Inspector:** Right panel for detailed attribute editing of the selected node.  
+4. **Source Manager:** Management of referenced OpenAPI documents.
 
-## **6\. Implementierungs-Roadmap**
+## **6\. Implementation Roadmap**
 
 ### **Phase 1: Core & Context Logic**
 
 * Setup Vue 3 \+ Vite \+ TS \+ Rete.js.  
-* Implementierung des **Context-Menu Plugins** für Rete.js.  
-* Entwicklung der Logik für "Action-Triggered Node Creation".
+* Implementation of the **Context-Menu Plugin** for Rete.js.  
+* Development of logic for "Action-Triggered Node Creation".
 
 ### **Phase 2: Arazzo Validation & YAML**
 
-* Mapping der visuellen Verbindungen auf onSuccess/onFailure Pfade.  
-* YAML-Export Logik.
+* Mapping visual connections to onSuccess/onFailure paths.  
+* YAML export logic.
 
 ### **Phase 3: Smart Suggestions**
 
-* Vorschlagen von operationIds basierend auf dem Kontext des vorherigen Schrittes.
+* Suggesting operationIds based on the context of the previous step.
