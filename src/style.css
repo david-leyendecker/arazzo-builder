@@ -13,3 +13,80 @@ body {
   height: 100vh;
   overflow: hidden;
 }
+
+/* Rete Context Menu Styles */
+.rete-context-menu {
+  position: absolute;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  padding: 4px;
+  min-width: 180px;
+  z-index: 10000;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.rete-context-menu .item {
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: #374151;
+  border-radius: 6px;
+  transition: all 0.1s ease;
+  font-weight: 500;
+}
+
+.rete-context-menu .item:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.rete-context-menu .search {
+  padding: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 4px;
+}
+
+.rete-context-menu .search input {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+}
+
+.rete-context-menu .search input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.context-menu {
+  position: absolute;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+  padding: 4px;
+  min-width: 180px;
+  z-index: 10000;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.context-menu .item {
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 14px;
+  color: #374151;
+  border-radius: 6px;
+  transition: all 0.1s ease;
+  font-weight: 500;
+}
+
+.context-menu .item:hover {
+  background: #f3f4f6;
+  color: #111827;
+}

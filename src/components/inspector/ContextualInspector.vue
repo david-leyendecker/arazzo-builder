@@ -8,7 +8,12 @@ const workflowStore = useWorkflowStore()
 
 const selectedNode = computed(() => workflowStore.selectedNode)
 const selectedStep = computed(() => workflowStore.selectedStep)
-const hasSelection = computed(() => selectedNode.value !== null && selectedNode.value.type === 'step')
+const hasSelection = computed(() => selectedNode.value !== null)
+const isStepNode = computed(() => selectedNode.value?.type === 'step')
+const isWorkflowNode = computed(() => selectedNode.value?.type === 'workflow')
+const isParameterNode = computed(() => selectedNode.value?.type === 'parameter')
+const isCriteriaNode = computed(() => selectedNode.value?.type === 'criteria')
+const isStartOrEndNode = computed(() => selectedNode.value?.type === 'start' || selectedNode.value?.type === 'end')
 
 // OperationId suggestions
 const operationIdInput = ref('')
@@ -170,6 +175,91 @@ const handleBlur = () => {
 
     <!-- Node Details -->
     <div v-else class="space-y-4">
+      <!-- Node Type Badge -->
+      <div class="mb-3">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          {{ selectedNode.type }}
+        </span>
+      </div>
+
+      <!-- Workflow Node -->
+      <div v-if="isWorkflowNode">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Workflow ID</label>
+          <input
+            type="text"
+            :value="selectedNode.data.workflowId"
+            readonly
+            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+          />
+        </div>
+        <p class="text-xs text-gray-500 mt-2">Right-click this node to add steps to your workflow.</p>
+      </div>
+
+      <!-- Start/End Node -->
+      <div v-else-if="isStartOrEndNode">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Node ID</label>
+          <input
+            type="text"
+            :value="selectedNode.id"
+            readonly
+            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+          />
+        </div>
+        <p class="text-xs text-gray-500 mt-2">
+          {{ selectedNode.type === 'start' ? 'Marks the beginning of workflow execution.' : 'Marks the end of workflow execution.' }}
+        </p>
+      </div>
+
+      <!-- Parameter Node -->
+      <div v-else-if="isParameterNode">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Parameter Name</label>
+          <input
+            type="text"
+            :value="selectedNode.data.name"
+            readonly
+            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1 mt-3">Location</label>
+          <input
+            type="text"
+            :value="selectedNode.data.in"
+            readonly
+            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+          />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1 mt-3">Value</label>
+          <input
+            type="text"
+            :value="selectedNode.data.value"
+            readonly
+            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+          />
+        </div>
+        <p class="text-xs text-gray-500 mt-2">Parameter node for step configuration.</p>
+      </div>
+
+      <!-- Criteria Node -->
+      <div v-else-if="isCriteriaNode">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Criteria Expression</label>
+          <input
+            type="text"
+            :value="selectedNode.data.criteria"
+            readonly
+            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+          />
+        </div>
+        <p class="text-xs text-gray-500 mt-2">Success validation criteria for the step.</p>
+      </div>
+
+      <!-- Step Node (original content) -->
+      <div v-else-if="isStepNode">
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Step ID</label>
         <input
@@ -317,6 +407,8 @@ const handleBlur = () => {
           No criteria defined
         </div>
       </div>
+      </div>
+      <!-- End of Step Node section -->
     </div>
   </div>
 </template>

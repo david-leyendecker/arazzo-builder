@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useEditorStore } from '../../stores/editor'
 import { useWorkflowStore } from '../../stores/workflow'
-import { createEditor, addNode, StartNode, StepNode, EndNode } from '../../rete/editor'
+import { createEditor, addNode, StartNode, StepNode, EndNode, WorkflowNode, ParameterNode, SuccessCriteriaNode } from '../../rete/editor'
 import type { ArazzoStep } from '../../types/arazzo'
 
 const editorStore = useEditorStore()
@@ -42,6 +42,48 @@ const handleExportYAML = () => {
   }
 }
 
+// Watch for OpenAPI spec loading to auto-create workflow node
+watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) => {
+  console.log('Watch triggered:', { newVal, oldVal, hasEditor: !!editorInstance })
+  
+  if (newVal && newVal !== oldVal) {
+    // Wait for editor to be ready if it's not yet
+    if (!editorInstance) {
+      console.warn('Editor not ready yet, waiting...')
+      // Retry after a short delay
+      setTimeout(async () => {
+        if (editorInstance) {
+          await createWorkflowNode()
+        }
+      }, 500)
+      return
+    }
+    
+    await createWorkflowNode()
+  }
+}, { flush: 'post' })
+
+async function createWorkflowNode() {
+  if (!editorInstance) return
+  
+  // Check if workflow node already exists
+  const hasWorkflowNode = workflowStore.nodes.some(n => (n.type as string) === 'workflow')
+  
+  console.log('Creating workflow node:', { hasWorkflowNode })
+  
+  if (!hasWorkflowNode) {
+    const workflowNode = new WorkflowNode('workflow-root', 'main-workflow')
+    await addNode(
+      editorInstance.editor,
+      editorInstance.area,
+      workflowNode,
+      { x: 100, y: 100 }
+    )
+    
+    console.log('Workflow node created successfully')
+  }
+}
+
 onMounted(async () => {
   if (canvasContainer.value) {
     try {
@@ -54,12 +96,15 @@ onMounted(async () => {
         if (context.type === 'nodeadded') {
           const node = context.data
           const nodeType = node instanceof StartNode ? 'start' 
-                         : node instanceof StepNode ? 'step' 
+                         : node instanceof StepNode ? 'step'
+                         : node instanceof WorkflowNode ? 'workflow'
+                         : node instanceof ParameterNode ? 'parameter'
+                         : node instanceof SuccessCriteriaNode ? 'criteria'
                          : 'end'
           
           const workflowNode = {
             id: node.id,
-            type: nodeType as 'start' | 'step' | 'end',
+            type: nodeType as any,
             data: nodeType === 'step' 
               ? {
                   stepId: (node as StepNode).stepId,
@@ -68,6 +113,16 @@ onMounted(async () => {
                   parameters: [],
                   successCriteria: []
                 } as ArazzoStep
+              : nodeType === 'workflow'
+              ? { workflowId: (node as WorkflowNode).workflowId }
+              : nodeType === 'parameter'
+              ? { 
+                  name: (node as ParameterNode).parameterName,
+                  in: (node as ParameterNode).parameterIn,
+                  value: (node as ParameterNode).parameterValue
+                }
+              : nodeType === 'criteria'
+              ? { criteria: (node as SuccessCriteriaNode).criteria }
               : {}
           }
           
@@ -110,39 +165,14 @@ onMounted(async () => {
         return context
       })
 
-      // Add initial Start and End nodes
-      const startNode = new StartNode('start-1')
-      await addNode(
-        editorInstance.editor,
-        editorInstance.area,
-        startNode,
-        { x: 100, y: 200 }
-      )
-      
-      // Manually add start node to workflow store
-      workflowStore.addNode({
-        id: 'start-1',
-        type: 'start',
-        data: {}
-      })
-
-      const endNode = new EndNode('end-1')
-      await addNode(
-        editorInstance.editor,
-        editorInstance.area,
-        endNode,
-        { x: 600, y: 200 }
-      )
-      
-      // Manually add end node to workflow store
-      workflowStore.addNode({
-        id: 'end-1',
-        type: 'end',
-        data: {}
-      })
-
       // Fit the view to show all nodes
       await editorInstance.area.area.zoom(1)
+      
+      // Check if there are already loaded specs (in case they were loaded before mount)
+      if (workflowStore.parsedSpecs.length > 0 && !workflowStore.nodes.some(n => (n.type as string) === 'workflow')) {
+        console.log('Specs already loaded, creating workflow node')
+        await createWorkflowNode()
+      }
     } catch (error) {
       console.error('Failed to initialize editor:', error)
     }

@@ -68,7 +68,7 @@ export interface ArazzoWorkflow {
 /**
  * Runtime types for the workflow builder
  */
-export type NodeType = 'start' | 'step' | 'end';
+export type NodeType = 'start' | 'step' | 'end' | 'workflow' | 'parameter' | 'criteria';
 
 export interface WorkflowNode {
   id: string;

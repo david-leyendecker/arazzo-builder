@@ -32,7 +32,8 @@ export const useWorkflowStore = defineStore('workflow', {
     selectedSourceId: null as string | null,
     parsedSpecs: [] as ParsedOpenAPISpec[],
     loadingSpecs: new Set<string>(),
-    specErrors: {} as Record<string, string>
+    specErrors: {} as Record<string, string>,
+    triggerWorkflowNodeCreation: 0 as number // Timestamp trigger for workflow node creation
   }),
 
   getters: {
@@ -346,6 +347,10 @@ export const useWorkflowStore = defineStore('workflow', {
         
         // Add the new spec
         this.parsedSpecs.push(parsedSpec)
+        
+        // Trigger workflow node creation (will be handled by the canvas component)
+        this.triggerWorkflowNodeCreation = Date.now()
+        console.log('OpenAPI spec loaded, triggering workflow node creation:', this.triggerWorkflowNodeCreation)
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         this.specErrors[sourceName] = errorMessage
