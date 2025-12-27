@@ -372,30 +372,7 @@ const closeContextMenu = () => {
   background-size: 20px 20px;
 }
 
-/* Dark mode styles for Vue Flow MiniMap */
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__minimap) {
-  background-color: rgb(31 41 55) !important;
-  border-color: rgb(75 85 99) !important;
-}
-
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__minimap svg) {
-  background-color: rgb(31 41 55) !important;
-}
-
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__minimap rect) {
-  fill: rgb(31 41 55) !important;
-}
-
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__minimap-mask) {
-  fill: rgb(17 24 39) !important;
-}
-
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__minimap-node) {
-  fill: rgb(75 85 99) !important;
-  stroke: rgb(107 114 128) !important;
-}
-
-/* Filter to invert minimap colors in dark mode */
+/* Dark mode styles for Vue Flow MiniMap - using filter for canvas inversion */
 :global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__minimap) {
   filter: invert(1) hue-rotate(180deg);
   opacity: 0.8;
