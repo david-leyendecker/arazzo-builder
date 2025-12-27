@@ -372,12 +372,6 @@ const closeContextMenu = () => {
   background-size: 20px 20px;
 }
 
-/* Dark mode styles for Vue Flow MiniMap - using filter for canvas inversion */
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__minimap) {
-  filter: invert(1) hue-rotate(180deg);
-  opacity: 0.8;
-}
-
 /* Dark mode styles for Vue Flow Controls - using darker slate colors */
 :global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls) {
   background-color: rgb(15 23 42) !important;
