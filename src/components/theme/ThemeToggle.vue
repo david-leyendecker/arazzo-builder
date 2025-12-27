@@ -5,9 +5,6 @@ import { computed } from 'vue'
 const themeStore = useThemeStore()
 
 const currentIcon = computed(() => {
-  if (themeStore.selectedTheme === 'auto') {
-    return themeStore.isDark ? '🌙' : '☀️'
-  }
   return themeStore.isDark ? '🌙' : '☀️'
 })
 
