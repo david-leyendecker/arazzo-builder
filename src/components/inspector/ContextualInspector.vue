@@ -148,8 +148,11 @@ const updateParameter = (index: number, field: keyof ArazzoParameter, value: any
 const hasOpenAPISpecs = computed(() => workflowStore.parsedSpecs.length > 0)
 const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
 
+// Delay for blur event to allow click on suggestion dropdown
+const SUGGESTION_DROPDOWN_DELAY_MS = 200
+
 const handleBlur = () => {
-  window.setTimeout(() => showSuggestions.value = false, 200)
+  window.setTimeout(() => showSuggestions.value = false, SUGGESTION_DROPDOWN_DELAY_MS)
 }
 </script>
 

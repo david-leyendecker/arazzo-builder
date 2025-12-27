@@ -45,7 +45,7 @@ export async function fetchOpenAPISpec(url: string, sourceName: string): Promise
       const text = await response.text()
       // Import yaml dynamically
       const yaml = await import('js-yaml')
-      spec = yaml.load(text)
+      spec = yaml.load(text, { schema: yaml.JSON_SCHEMA }) as any
     } else {
       // Try JSON first, then YAML
       const text = await response.text()
@@ -53,7 +53,7 @@ export async function fetchOpenAPISpec(url: string, sourceName: string): Promise
         spec = JSON.parse(text)
       } catch {
         const yaml = await import('js-yaml')
-        spec = yaml.load(text)
+        spec = yaml.load(text, { schema: yaml.JSON_SCHEMA }) as any
       }
     }
     

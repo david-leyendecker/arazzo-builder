@@ -99,10 +99,10 @@ npm run preview
 - ✓ YAML export logic
 - ✓ Validation of workflow structure
 
-### Phase 3: Smart Suggestions
-- Suggesting operationIds based on context
-- Auto-completion for parameters
-- Validation against OpenAPI schemas
+### Phase 3: Smart Suggestions ✓
+- ✓ Suggesting operationIds based on context
+- ✓ Auto-completion for parameters
+- ✓ Validation against OpenAPI schemas
 
 ## Contributing
 

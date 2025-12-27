@@ -247,10 +247,10 @@ export const useWorkflowStore = defineStore('workflow', {
       workflow.steps.forEach(step => {
         if (!step.operationId || step.operationId.trim() === '') {
           errors.push(`Step "${step.stepId}" is missing an operationId`)
-        } else {
-          // Validate against OpenAPI specs if available
+        } else if (this.parsedSpecs.length > 0) {
+          // Validate against OpenAPI specs only if specs are available
           const validation = this.validateOperationId(step.operationId)
-          if (!validation.valid && this.parsedSpecs.length > 0) {
+          if (!validation.valid) {
             errors.push(`Step "${step.stepId}": ${validation.error}`)
           }
         }
