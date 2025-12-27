@@ -163,11 +163,11 @@ const handleBlur = () => {
 
 <template>
   <div class="contextual-inspector p-4">
-    <h2 class="text-lg font-semibold text-gray-800 mb-4">Inspector</h2>
+    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Inspector</h2>
 
     <!-- No Selection State -->
-    <div v-if="!hasSelection" class="text-center py-8 text-gray-500">
-      <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="!hasSelection" class="text-center py-8 text-gray-500 dark:text-gray-400">
+      <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       <p class="text-sm">Select a node to view details</p>
@@ -177,7 +177,7 @@ const handleBlur = () => {
     <div v-else class="space-y-4">
       <!-- Node Type Badge -->
       <div v-if="selectedNode" class="mb-3">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
           {{ selectedNode.type }}
         </span>
       </div>
@@ -185,29 +185,29 @@ const handleBlur = () => {
       <!-- Workflow Node -->
       <div v-if="isWorkflowNode && selectedNode">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Workflow ID</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Workflow ID</label>
           <input
             type="text"
             :value="(selectedNode.data as { workflowId: string }).workflowId"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
           />
         </div>
-        <p class="text-xs text-gray-500 mt-2">Right-click this node to add steps to your workflow.</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Right-click this node to add steps to your workflow.</p>
       </div>
 
       <!-- Start/End Node -->
       <div v-else-if="isStartOrEndNode && selectedNode">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Node ID</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Node ID</label>
           <input
             type="text"
             :value="selectedNode.id"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
           />
         </div>
-        <p class="text-xs text-gray-500 mt-2">
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
           {{ selectedNode.type === 'start' ? 'Marks the beginning of workflow execution.' : 'Marks the end of workflow execution.' }}
         </p>
       </div>
@@ -215,65 +215,65 @@ const handleBlur = () => {
       <!-- Parameter Node -->
       <div v-else-if="isParameterNode && selectedNode">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Parameter Name</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parameter Name</label>
           <input
             type="text"
             :value="(selectedNode.data as { name: string }).name"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1 mt-3">Location</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 mt-3">Location</label>
           <input
             type="text"
             :value="(selectedNode.data as { in: string }).in"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
           />
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1 mt-3">Value</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 mt-3">Value</label>
           <input
             type="text"
             :value="(selectedNode.data as { value: string }).value"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
           />
         </div>
-        <p class="text-xs text-gray-500 mt-2">Parameter node for step configuration.</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Parameter node for step configuration.</p>
       </div>
 
       <!-- Criteria Node -->
       <div v-else-if="isCriteriaNode && selectedNode">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Criteria Expression</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Criteria Expression</label>
           <input
             type="text"
             :value="(selectedNode.data as { criteria: string }).criteria"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
           />
         </div>
-        <p class="text-xs text-gray-500 mt-2">Success validation criteria for the step.</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Success validation criteria for the step.</p>
       </div>
 
       <!-- Step Node (original content) -->
       <div v-else-if="isStepNode">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Step ID</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Step ID</label>
         <input
           type="text"
           :value="selectedStep?.stepId"
           readonly
-          class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
         />
       </div>
 
       <div class="relative">
-        <label class="block text-sm font-medium text-gray-700 mb-1">
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Operation ID
-          <span v-if="isLoadingSpecs" class="text-xs text-gray-500 ml-2">(Loading specs...)</span>
+          <span v-if="isLoadingSpecs" class="text-xs text-gray-500 dark:text-gray-400 ml-2">(Loading specs...)</span>
         </label>
         <input
           type="text"
@@ -281,54 +281,54 @@ const handleBlur = () => {
           @input="handleOperationIdInput"
           @focus="showSuggestions = operationIdInput.length > 0 && filteredOperations.length > 0"
           @blur="handleBlur"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          :class="{ 'border-red-500': operationIdValidation && !operationIdValidation.valid }"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+          :class="{ 'border-red-500 dark:border-red-500': operationIdValidation && !operationIdValidation.valid }"
           placeholder="e.g., getUserById"
         />
         
         <!-- Validation feedback -->
-        <div v-if="operationIdValidation && !operationIdValidation.valid" class="mt-1 text-xs text-red-600">
+        <div v-if="operationIdValidation && !operationIdValidation.valid" class="mt-1 text-xs text-red-600 dark:text-red-400">
           {{ operationIdValidation.error }}
         </div>
-        <div v-if="operationIdValidation && operationIdValidation.valid" class="mt-1 text-xs text-green-600">
+        <div v-if="operationIdValidation && operationIdValidation.valid" class="mt-1 text-xs text-green-600 dark:text-green-400">
           ✓ Valid operation
         </div>
         
         <!-- Suggestions dropdown -->
         <div 
           v-if="showSuggestions && hasOpenAPISpecs" 
-          class="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto"
+          class="absolute z-10 w-full mt-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-auto"
         >
           <div
             v-for="operation in filteredOperations.slice(0, 10)"
             :key="operation.operationId"
             @click="selectOperation(operation.operationId)"
-            class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+            class="px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-gray-600 last:border-0"
           >
-            <div class="font-medium text-sm text-gray-800">{{ operation.operationId }}</div>
-            <div class="text-xs text-gray-500">
+            <div class="font-medium text-sm text-gray-800 dark:text-gray-200">{{ operation.operationId }}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-400">
               <span class="font-semibold">{{ operation.method }}</span> {{ operation.path }}
             </div>
-            <div v-if="operation.summary" class="text-xs text-gray-600 mt-1">{{ operation.summary }}</div>
+            <div v-if="operation.summary" class="text-xs text-gray-600 dark:text-gray-300 mt-1">{{ operation.summary }}</div>
           </div>
-          <div v-if="filteredOperations.length === 0" class="px-3 py-2 text-sm text-gray-500 italic">
+          <div v-if="filteredOperations.length === 0" class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic">
             No matching operations found
           </div>
         </div>
         
         <!-- No specs warning -->
-        <div v-if="!hasOpenAPISpecs && !isLoadingSpecs" class="mt-1 text-xs text-amber-600">
+        <div v-if="!hasOpenAPISpecs && !isLoadingSpecs" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
           💡 Add an OpenAPI source to get operation suggestions
         </div>
       </div>
 
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
         <textarea
           :value="selectedStep?.description || ''"
           @input="updateDescription"
           rows="3"
-          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
           placeholder="Describe this step..."
         ></textarea>
       </div>
@@ -336,16 +336,16 @@ const handleBlur = () => {
       <!-- Parameters Section -->
       <div>
         <div class="flex items-center justify-between mb-2">
-          <label class="block text-sm font-medium text-gray-700">Parameters</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Parameters</label>
           <button 
             @click="addParameter"
-            class="text-sm text-blue-600 hover:text-blue-700 font-medium"
+            class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
           >
             + Add
           </button>
         </div>
         
-        <div v-if="!selectedStep?.parameters || selectedStep.parameters.length === 0" class="text-sm text-gray-500 italic">
+        <div v-if="!selectedStep?.parameters || selectedStep.parameters.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
           No parameters defined
         </div>
         
@@ -353,7 +353,7 @@ const handleBlur = () => {
           <div
             v-for="(param, index) in selectedStep.parameters"
             :key="index"
-            class="p-3 bg-gray-50 rounded-md border border-gray-200"
+            class="p-3 bg-gray-50 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600"
           >
             <div class="flex items-start justify-between mb-2">
               <div class="flex-1 grid grid-cols-2 gap-2">
@@ -362,12 +362,12 @@ const handleBlur = () => {
                   :value="param.name"
                   @input="(e) => updateParameter(index, 'name', (e.target as HTMLInputElement).value)"
                   placeholder="Parameter name"
-                  class="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                  class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 />
                 <select
                   :value="param.in"
                   @change="(e) => updateParameter(index, 'in', (e.target as HTMLSelectElement).value)"
-                  class="px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+                  class="px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                 >
                   <option value="path">Path</option>
                   <option value="query">Query</option>
@@ -378,7 +378,7 @@ const handleBlur = () => {
               </div>
               <button
                 @click="removeParameter(index)"
-                class="ml-2 text-gray-400 hover:text-red-500"
+                class="ml-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
                 title="Remove parameter"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -391,7 +391,7 @@ const handleBlur = () => {
               :value="param.value"
               @input="(e) => updateParameter(index, 'value', (e.target as HTMLInputElement).value)"
               placeholder="Value (e.g., $inputs.userId, literal value)"
-              class="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-blue-500"
+              class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             />
           </div>
         </div>
@@ -400,10 +400,10 @@ const handleBlur = () => {
       <!-- Success Criteria -->
       <div>
         <div class="flex items-center justify-between mb-2">
-          <label class="block text-sm font-medium text-gray-700">Success Criteria</label>
-          <button class="text-sm text-blue-600 hover:text-blue-700">+ Add</button>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Success Criteria</label>
+          <button class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">+ Add</button>
         </div>
-        <div class="text-sm text-gray-500 italic">
+        <div class="text-sm text-gray-500 dark:text-gray-400 italic">
           No criteria defined
         </div>
       </div>
