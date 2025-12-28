@@ -25,6 +25,7 @@
 
 ## Running & dev
 - Install: `npm install`. Dev server: `npm run dev`. Build: `npm run build` (runs `vue-tsc -b` then `vite build`). Preview: `npm run preview`.
+- Tests: `npm test -- --run` (non-interactive, exits with status code) or `npm test` (watch mode). Use `-- --run` for CI/agent checks; results show pass/fail counts and coverage. Test UI: `npm run test:ui`.
 - Sample assets: sample OpenAPI in [public/sample-openapi.json](public/sample-openapi.json); sample workflow spec in [examples/sample-workflow.arazzo.yaml](examples/sample-workflow.arazzo.yaml).
 
 ## Tips for agents
