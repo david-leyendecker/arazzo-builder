@@ -307,9 +307,9 @@ const closeContextMenu = () => {
 <template>
   <div class="workflow-canvas-wrapper h-full w-full relative">
     <!-- Header Bar -->
-    <div class="absolute top-0 left-0 right-0 z-10 bg-white border-b border-gray-200 px-4 py-3">
+    <div class="absolute top-0 left-0 right-0 z-10 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-4 py-3">
       <div class="flex items-center justify-between">
-        <h1 class="text-xl font-semibold text-gray-800">Arazzo Workflow Builder</h1>
+        <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Arazzo Workflow Builder</h1>
         <div class="flex gap-2">
           <button 
             @click="handleExportYAML"
@@ -353,7 +353,7 @@ const closeContextMenu = () => {
     />
 
     <!-- Help Text -->
-    <div class="absolute bottom-4 left-4 bg-white/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 z-10">
+    <div class="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 dark:text-gray-300 z-10">
       <p class="font-medium mb-1">Quick Tips:</p>
       <ul class="space-y-1">
         <li>• Right-click on canvas to add nodes</li>
@@ -369,6 +369,34 @@ const closeContextMenu = () => {
   background-image: 
     linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Dark mode styles for Vue Flow Controls - using darker slate colors */
+:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls) {
+  background-color: rgb(15 23 42) !important;
+  border-color: rgb(51 65 85) !important;
+}
+
+:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls-button) {
+  background-color: rgb(15 23 42) !important;
+  border-color: rgb(51 65 85) !important;
+  color: rgb(229 231 235) !important;
+}
+
+:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls-button):hover {
+  background-color: rgb(30 41 59) !important;
+}
+
+:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls-button svg) {
+  fill: rgb(229 231 235) !important;
+}
+
+/* Dark mode background pattern */
+:global(.dark) .workflow-canvas {
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 </style>
