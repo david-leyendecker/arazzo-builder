@@ -4,6 +4,24 @@ import type { ArazzoWorkflow, ArazzoSourceDescription, ArazzoStep, ArazzoCriteri
 import type { ParsedOpenAPISpec } from '../services/openapi-service'
 import { fetchOpenAPISpec } from '../services/openapi-service'
 
+const STORAGE_KEY = 'arazzo-workflows'
+const SOURCES_KEY = 'arazzo-sources'
+
+interface PersistedWorkflowData {
+  nodes: WorkflowNode[]
+  connections: WorkflowConnection[]
+  workflow: ArazzoWorkflow
+}
+
+interface WorkflowStorage {
+  [sourceName: string]: PersistedWorkflowData
+}
+
+interface SourcesStorage {
+  sources: ArazzoSourceDescription[]
+  selectedSourceId: string | null
+}
+
 /**
  * Store for managing the Arazzo workflow state
  */
@@ -55,6 +73,11 @@ export const useWorkflowStore = defineStore('workflow', {
 
     sourceDescriptions: (state) => state.workflow.sourceDescriptions,
 
+    selectedSource: (state) => {
+      if (!state.selectedSourceId) return null
+      return state.workflow.sourceDescriptions.find(s => s.name === state.selectedSourceId) || null
+    },
+
     allOperations: (state) => {
       return state.parsedSpecs.flatMap(spec => spec.operations)
     },
@@ -65,19 +88,29 @@ export const useWorkflowStore = defineStore('workflow', {
   actions: {
     setWorkflowTitle(title: string) {
       this.workflow.info.title = title
+      this.saveWorkflowToStorage()
     },
 
     setWorkflowDescription(description: string) {
       this.workflow.info.description = description
+      this.saveWorkflowToStorage()
     },
 
     addSourceDescription(source: ArazzoSourceDescription) {
       this.workflow.sourceDescriptions.push(source)
       
+      // Auto-select the first source
+      if (this.workflow.sourceDescriptions.length === 1) {
+        this.selectedSourceId = source.name
+      }
+      
       // Automatically fetch and parse the spec if it's an OpenAPI source
       if (source.type === 'openapi' && source.url) {
         this.loadOpenAPISpec(source.name, source.url)
       }
+      
+      // Save sources to storage after adding
+      this.saveSourcesToStorage()
     },
 
     removeSourceDescription(name: string) {
@@ -85,6 +118,14 @@ export const useWorkflowStore = defineStore('workflow', {
       if (index !== -1) {
         this.workflow.sourceDescriptions.splice(index, 1)
       }
+      
+      // If removing the selected source, clear selection
+      if (this.selectedSourceId === name) {
+        this.selectedSourceId = null
+      }
+      
+      // Save sources to storage
+      this.saveSourcesToStorage()
       
       // Remove the parsed spec
       const specIndex = this.parsedSpecs.findIndex(s => s.sourceName === name)
@@ -104,6 +145,8 @@ export const useWorkflowStore = defineStore('workflow', {
         const stepData = node.data as ArazzoStep
         this.workflow.workflows[0].steps.push(stepData)
       }
+      
+      this.saveWorkflowToStorage()
     },
 
     removeNode(nodeId: string) {
@@ -128,6 +171,8 @@ export const useWorkflowStore = defineStore('workflow', {
           conn => conn.source !== nodeId && conn.target !== nodeId
         )
       }
+      
+      this.saveWorkflowToStorage()
     },
 
     updateNode(nodeId: string, data: Partial<ArazzoStep>) {
@@ -151,6 +196,8 @@ export const useWorkflowStore = defineStore('workflow', {
           }
         }
       }
+      
+      this.saveWorkflowToStorage()
     },
 
     /**
@@ -202,6 +249,7 @@ export const useWorkflowStore = defineStore('workflow', {
     addConnection(connection: WorkflowConnection) {
       this.connections.push(connection)
       this.updateConnectionPaths()
+      this.saveWorkflowToStorage()
     },
 
     removeConnection(connectionId: string) {
@@ -209,6 +257,7 @@ export const useWorkflowStore = defineStore('workflow', {
       if (index !== -1) {
         this.connections.splice(index, 1)
         this.updateConnectionPaths()
+        this.saveWorkflowToStorage()
       }
     },
 
@@ -263,7 +312,47 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     selectSource(sourceId: string | null) {
+      // Save current workflow before switching
+      if (this.selectedSourceId && this.selectedSourceId !== sourceId) {
+        this.saveWorkflowToStorage()
+      }
+      
       this.selectedSourceId = sourceId
+      
+      // Load workflow for the new source
+      if (sourceId) {
+        // First clear the current workflow state
+        this.nodes = []
+        this.connections = []
+        this.selectedNodeId = null
+        if (this.workflow.workflows[0]) {
+          this.workflow.workflows[0].steps = []
+        }
+        
+        // Then try to load saved workflow
+        this.loadWorkflowFromStorage()
+      }
+    },
+
+    /**
+     * Check if there is any workflow data (nodes or steps)
+     */
+    hasWorkflowData(): boolean {
+      return this.nodes.length > 0 || (this.workflow.workflows[0]?.steps.length || 0) > 0
+    },
+
+    /**
+     * Clear all workflow data (nodes, connections, and steps)
+     */
+    clearWorkflowData() {
+      this.nodes = []
+      this.connections = []
+      this.selectedNodeId = null
+      if (this.workflow.workflows[0]) {
+        this.workflow.workflows[0].steps = []
+      }
+      
+      this.saveWorkflowToStorage()
     },
 
     /**
@@ -437,6 +526,132 @@ export const useWorkflowStore = defineStore('workflow', {
       }
       
       return { valid: true }
+    },
+
+    /**
+     * Save current workflow state to localStorage for the selected source
+     */
+    saveWorkflowToStorage() {
+      if (!this.selectedSourceId) return
+      
+      try {
+        const storage: WorkflowStorage = this.loadAllWorkflowsFromStorage()
+        
+        storage[this.selectedSourceId] = {
+          nodes: this.nodes,
+          connections: this.connections,
+          workflow: this.workflow
+        }
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(storage))
+        
+        // Also save sources and selected source
+        this.saveSourcesToStorage()
+      } catch (error) {
+        console.error('Failed to save workflow to localStorage:', error)
+      }
+    },
+
+    /**
+     * Save sources to localStorage
+     */
+    saveSourcesToStorage() {
+      try {
+        const sourcesData: SourcesStorage = {
+          sources: this.workflow.sourceDescriptions,
+          selectedSourceId: this.selectedSourceId
+        }
+        localStorage.setItem(SOURCES_KEY, JSON.stringify(sourcesData))
+      } catch (error) {
+        console.error('Failed to save sources to localStorage:', error)
+      }
+    },
+
+    /**
+     * Load sources from localStorage
+     */
+    loadSourcesFromStorage() {
+      try {
+        const data = localStorage.getItem(SOURCES_KEY)
+        if (!data) return false
+        
+        const sourcesData = JSON.parse(data) as SourcesStorage
+        if (sourcesData.sources && sourcesData.sources.length > 0) {
+          this.workflow.sourceDescriptions = sourcesData.sources
+          this.selectedSourceId = sourcesData.selectedSourceId
+          
+          // Reload OpenAPI specs for all sources
+          sourcesData.sources.forEach(source => {
+            if (source.type === 'openapi' && source.url) {
+              this.loadOpenAPISpec(source.name, source.url)
+            }
+          })
+          
+          return true
+        }
+      } catch (error) {
+        console.error('Failed to load sources from localStorage:', error)
+      }
+      
+      return false
+    },
+
+    /**
+     * Load all workflows from localStorage
+     */
+    loadAllWorkflowsFromStorage(): WorkflowStorage {
+      try {
+        const data = localStorage.getItem(STORAGE_KEY)
+        if (!data) return {}
+        return JSON.parse(data) as WorkflowStorage
+      } catch (error) {
+        console.error('Failed to load workflows from localStorage:', error)
+        return {}
+      }
+    },
+
+    /**
+     * Load workflow state from localStorage for the selected source
+     */
+    loadWorkflowFromStorage() {
+      if (!this.selectedSourceId) return false
+      
+      try {
+        const storage = this.loadAllWorkflowsFromStorage()
+        const savedWorkflow = storage[this.selectedSourceId]
+        
+        if (savedWorkflow) {
+          this.nodes = savedWorkflow.nodes || []
+          this.connections = savedWorkflow.connections || []
+          
+          // Restore workflow data but preserve sourceDescriptions from current state
+          if (savedWorkflow.workflow) {
+            this.workflow = {
+              ...savedWorkflow.workflow,
+              sourceDescriptions: this.workflow.sourceDescriptions
+            }
+          }
+          
+          return true
+        }
+      } catch (error) {
+        console.error('Failed to load workflow from localStorage:', error)
+      }
+      
+      return false
+    },
+
+    /**
+     * Initialize the store, loading saved state if available
+     */
+    initializeStore() {
+      // Load sources first
+      const sourcesLoaded = this.loadSourcesFromStorage()
+      
+      // Then load workflow for the selected source
+      if (sourcesLoaded && this.selectedSourceId) {
+        this.loadWorkflowFromStorage()
+      }
     }
   }
 })
