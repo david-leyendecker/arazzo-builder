@@ -114,6 +114,7 @@ const onNodeDragStop = (event: any) => {
     const node = workflowStore.nodes.find(n => n.id === event.node.id)
     if (node) {
       node.position = event.node.position
+      workflowStore.saveWorkflowToStorage()
     }
   }
 }
