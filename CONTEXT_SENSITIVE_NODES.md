@@ -1,10 +1,10 @@
-# Context-Sensitive Node Creation
+# Context-Sensitive Node Creation with Vue Flow Node Toolbar
 
-This document describes the context-sensitive node creation system implemented in the Arazzo Workflow Builder.
+This document describes the context-sensitive node creation system implemented in the Arazzo Workflow Builder using Vue Flow Node Toolbar.
 
 ## Overview
 
-The application now supports hierarchical node creation based on the Arazzo specification structure. Instead of a flat list of nodes, you can create parent-child relationships that reflect the actual workflow structure.
+The application supports hierarchical node creation based on the Arazzo specification structure. Using Vue Flow's Node Toolbar component, you can create parent-child relationships that reflect the actual workflow structure through intuitive hover-based toolbars.
 
 ## Node Types
 
@@ -42,33 +42,34 @@ The application now supports hierarchical node creation based on the Arazzo spec
 ## Usage Workflow
 
 ### Step 1: Add an OpenAPI Source
-1. Open the Source Manager panel
-2. Add an OpenAPI specification URL
-3. **Automatic**: A Workflow root node is created on the canvas
+1. Open the Source Manager panel (right side)
+2. Click "+ Add" to add an OpenAPI specification URL
+3. **Automatic**: A Workflow root node is created on the canvas (this only happens once)
 
 ### Step 2: Build the Workflow Structure
-1. Right-click on the **Workflow node** → Select "Add Step"
+1. Select the **Workflow node** to see the toolbar → Click "Add Step"
 2. A new Step node appears, positioned automatically
-3. Right-click on the **Step node** → Choose from:
-   - "Add Parameter" - to add input parameters
-   - "Add Success Criteria" - to add validation rules
-   - "Add Next Step" - to chain API calls
+3. Select the **Step node** to see the toolbar → Choose from:
+   - "Parameter" - to add input parameters
+   - "Criteria" - to add validation rules
+   - "Next Step" - to chain API calls
 
 ### Step 3: Configure Child Nodes
 - Select any Parameter or Criteria node
 - Use the Inspector panel to edit its properties
 - Child nodes are automatically linked to their parent Step
 
-## Context-Sensitive Menus
+## Node Toolbars
 
-The right-click context menu adapts based on what you click:
+The toolbar appears when you select a node and adapts based on the node type:
 
-| Context | Available Actions |
-|---------|------------------|
-| Empty canvas | Add Workflow, Add Start, Add End |
-| Workflow node | Add Step |
-| Step node | Add Parameter, Add Success Criteria, Add Next Step |
-| Parameter/Criteria node | (No children) |
+| Node Type | Available Actions | Deletable |
+|-----------|------------------|-----------|
+| Workflow node | Add Step | ❌ No (auto-created, singleton) |
+| Step node | Add Parameter, Add Success Criteria, Add Next Step | ✅ Yes |
+| Parameter/Criteria node | (No toolbar) | ✅ Yes |
+
+**Note:** The Workflow node is automatically created when you add an OpenAPI source and cannot be deleted. Only one workflow node is allowed per canvas.
 
 ## Programmatic API
 
@@ -88,7 +89,7 @@ workflowStore.addNode({
 
 ### Key Files
 
-- **`src/vue-flow/`**: Custom Vue Flow node components and context menu
+- **`src/vue-flow/`**: Custom Vue Flow node components with integrated Node Toolbars
 - **`src/components/workflow/WorkflowCanvas.vue`**: Canvas component with Vue Flow integration
 - **`src/stores/workflow.ts`**: State management with OpenAPI trigger
 - **`src/types/arazzo.ts`**: TypeScript type definitions

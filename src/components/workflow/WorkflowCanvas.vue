@@ -5,15 +5,12 @@ import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import { useWorkflowStore } from '../../stores/workflow'
-import type { ArazzoStep } from '../../types/arazzo'
 import WorkflowNodeComponent from '../../vue-flow/WorkflowNodeComponent.vue'
 import StartNodeComponent from '../../vue-flow/StartNodeComponent.vue'
 import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
 import EndNodeComponent from '../../vue-flow/EndNodeComponent.vue'
 import ParameterNodeComponent from '../../vue-flow/ParameterNodeComponent.vue'
 import SuccessCriteriaNodeComponent from '../../vue-flow/SuccessCriteriaNodeComponent.vue'
-import ContextMenu from '../../vue-flow/ContextMenu.vue'
-import type { ContextMenuItem } from '../../vue-flow/ContextMenu.vue'
 
 // Import Vue Flow styles
 import '@vue-flow/core/dist/style.css'
@@ -23,17 +20,8 @@ import '@vue-flow/minimap/dist/style.css'
 
 const workflowStore = useWorkflowStore()
 
-// Context menu state
-const contextMenu = ref({
-  visible: false,
-  x: 0,
-  y: 0,
-  items: [] as ContextMenuItem[],
-  nodeId: null as string | null
-})
-
 // Vue Flow composable
-const { onConnect, project } = useVueFlow()
+const { onConnect } = useVueFlow()
 
 // Node types mapping - use markRaw to prevent Vue reactivity on components
 const nodeTypes = markRaw({
@@ -56,7 +44,8 @@ watch(() => workflowStore.nodes, (newNodes) => {
     type: node.type,
     position: node.position || { x: 100, y: 100 },
     data: node.data,
-    label: node.type
+    label: node.type,
+    deletable: node.type !== 'workflow' // Workflow node cannot be deleted
   }))
 }, { immediate: true, deep: true })
 
@@ -136,149 +125,6 @@ const onNodeDragStop = (event: any) => {
 // Handle pane click (deselect nodes)
 const onPaneClick = () => {
   workflowStore.selectNode(null)
-  contextMenu.value.visible = false
-}
-
-// Handle right-click context menu
-const onNodeContextMenu = (event: any) => {
-  event.event.preventDefault()
-  
-  const node = event.node
-  contextMenu.value.nodeId = node.id
-  contextMenu.value.x = event.event.clientX
-  contextMenu.value.y = event.event.clientY
-  contextMenu.value.items = getContextMenuItems(node.type, node.id)
-  contextMenu.value.visible = true
-}
-
-const onPaneContextMenu = (event: MouseEvent) => {
-  event.preventDefault()
-  
-  contextMenu.value.nodeId = null
-  contextMenu.value.x = event.clientX
-  contextMenu.value.y = event.clientY
-  contextMenu.value.items = getContextMenuItems('root', null)
-  contextMenu.value.visible = true
-}
-
-// Get context menu items based on node type
-const getContextMenuItems = (nodeType: string, nodeId: string | null): ContextMenuItem[] => {
-  const items: ContextMenuItem[] = []
-  
-  if (nodeType === 'root') {
-    // Root context (empty canvas)
-    items.push({
-      label: 'Add Workflow',
-      key: 'workflow',
-      handler: () => addNodeAtCursor('workflow')
-    })
-    items.push({
-      label: 'Add Start Node',
-      key: 'start',
-      handler: () => addNodeAtCursor('start')
-    })
-    items.push({
-      label: 'Add End Node',
-      key: 'end',
-      handler: () => addNodeAtCursor('end')
-    })
-  } else if (nodeType === 'workflow' && nodeId) {
-    items.push({
-      label: 'Add Step',
-      key: 'step',
-      handler: () => addChildNode(nodeId, 'step')
-    })
-  } else if (nodeType === 'step' && nodeId) {
-    items.push({
-      label: 'Add Parameter',
-      key: 'parameter',
-      handler: () => addChildNode(nodeId, 'parameter')
-    })
-    items.push({
-      label: 'Add Success Criteria',
-      key: 'criteria',
-      handler: () => addChildNode(nodeId, 'criteria')
-    })
-    items.push({
-      label: 'Add Next Step',
-      key: 'next-step',
-      handler: () => addChildNode(nodeId, 'step')
-    })
-  }
-  
-  return items
-}
-
-// Add node at cursor position
-const addNodeAtCursor = (nodeType: string) => {
-  const timestamp = Date.now()
-  const id = `${nodeType}-${timestamp}`
-  
-  // Get the position relative to the flow
-  const position = project({ x: contextMenu.value.x, y: contextMenu.value.y })
-  
-  const nodeData = createNodeData(nodeType, id)
-  
-  workflowStore.addNode({
-    id,
-    type: nodeType as any,
-    data: nodeData,
-    position
-  })
-}
-
-// Add child node relative to parent
-const addChildNode = (parentId: string, nodeType: string) => {
-  const timestamp = Date.now()
-  const id = `${nodeType}-${timestamp}`
-  
-  // Find parent node position
-  const parentNode = workflowStore.nodes.find(n => n.id === parentId)
-  const parentPosition = parentNode?.position || { x: 100, y: 100 }
-  
-  // Calculate child position relative to parent
-  const offsetY = nodeType === 'parameter' ? -100 : nodeType === 'criteria' ? 100 : 0
-  const position = {
-    x: parentPosition.x + 250,
-    y: parentPosition.y + offsetY
-  }
-  
-  const nodeData = createNodeData(nodeType, id)
-  
-  workflowStore.addNode({
-    id,
-    type: nodeType as any,
-    data: nodeData,
-    position
-  })
-}
-
-// Create node data based on type
-const createNodeData = (nodeType: string, id: string): any => {
-  switch (nodeType) {
-    case 'workflow':
-      return { workflowId: id }
-    case 'step':
-      return {
-        stepId: id,
-        operationId: '',
-        description: '',
-        parameters: [],
-        successCriteria: []
-      } as ArazzoStep
-    case 'parameter':
-      return {
-        name: '',
-        in: 'query',
-        value: ''
-      }
-    case 'criteria':
-      return {
-        criteria: ''
-      }
-    default:
-      return {}
-  }
 }
 
 // Watch for OpenAPI spec loading to auto-create workflow node
@@ -297,11 +143,6 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
     }
   }
 })
-
-// Close context menu
-const closeContextMenu = () => {
-  contextMenu.value.visible = false
-}
 </script>
 
 <template>
@@ -329,8 +170,6 @@ const closeContextMenu = () => {
         :node-types="nodeTypes"
         @node-click="onNodeClick"
         @pane-click="onPaneClick"
-        @node-context-menu="onNodeContextMenu"
-        @pane-context-menu="onPaneContextMenu"
         @node-drag-stop="onNodeDragStop"
         class="workflow-canvas"
         :default-viewport="{ zoom: 1 }"
@@ -343,20 +182,12 @@ const closeContextMenu = () => {
       </VueFlow>
     </div>
 
-    <!-- Context Menu -->
-    <ContextMenu
-      :visible="contextMenu.visible"
-      :x="contextMenu.x"
-      :y="contextMenu.y"
-      :items="contextMenu.items"
-      @close="closeContextMenu"
-    />
-
     <!-- Help Text -->
     <div class="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 dark:text-gray-300 z-10">
       <p class="font-medium mb-1">Quick Tips:</p>
       <ul class="space-y-1">
-        <li>• Right-click on canvas to add nodes</li>
+        <li>• Add an OpenAPI source to auto-create the workflow node</li>
+        <li>• Select nodes to see action toolbar</li>
         <li>• Click and drag to connect nodes</li>
         <li>• Select a node to view details in the inspector</li>
       </ul>
