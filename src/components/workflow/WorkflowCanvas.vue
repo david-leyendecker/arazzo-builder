@@ -7,6 +7,7 @@ import { MiniMap } from '@vue-flow/minimap'
 import { useWorkflowStore } from '../../stores/workflow'
 import WorkflowNodeComponent from '../../vue-flow/WorkflowNodeComponent.vue'
 import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
+import Button from 'primevue/button'
 
 // Import Vue Flow styles
 import '@vue-flow/core/dist/style.css'
@@ -142,24 +143,21 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 </script>
 
 <template>
-  <div class="workflow-canvas-wrapper h-full w-full relative">
+  <div class="workflow-canvas-wrapper">
     <!-- Header Bar -->
-    <div class="absolute top-0 left-0 right-0 z-10 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-4 py-3">
-      <div class="flex items-center justify-between">
-        <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Arazzo Workflow Builder</h1>
-        <div class="flex gap-2">
-          <button 
-            @click="handleExportYAML"
-            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
-            Export YAML
-          </button>
-        </div>
+    <div class="header-bar">
+      <div class="header-content">
+        <h1 class="app-title">Arazzo Workflow Builder</h1>
+        <Button 
+          @click="handleExportYAML"
+          label="Export YAML"
+          icon="pi pi-download"
+        />
       </div>
     </div>
 
     <!-- Vue Flow Canvas -->
-    <div class="absolute top-16 left-0 right-0 bottom-0">
+    <div class="canvas-container">
       <VueFlow
         v-model:nodes="nodes"
         v-model:edges="edges"
@@ -179,9 +177,9 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
     </div>
 
     <!-- Help Text -->
-    <div class="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 dark:text-gray-300 z-10">
-      <p class="font-medium mb-1">Quick Tips:</p>
-      <ul class="space-y-1">
+    <div class="help-panel">
+      <p class="help-title">Quick Tips:</p>
+      <ul class="help-list">
         <li>• Add an OpenAPI source to auto-create the workflow node</li>
         <li>• Select nodes to see action toolbar</li>
         <li>• Click and drag to connect nodes</li>
@@ -192,6 +190,76 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 </template>
 
 <style scoped>
+.workflow-canvas-wrapper {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.header-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background: var(--bg-primary);
+  border-bottom: 1px solid var(--border-primary);
+  padding: 0.75rem 1rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-between;
+}
+
+.app-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.canvas-container {
+  position: absolute;
+  top: 4rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.help-panel {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  z-index: 10;
+}
+
+:global(.dark) .help-panel {
+  background: rgba(15, 23, 42, 0.9);
+}
+
+.help-title {
+  font-weight: 500;
+  margin: 0 0 0.25rem 0;
+}
+
+.help-list {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .workflow-canvas {
   background-image: 
     linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
