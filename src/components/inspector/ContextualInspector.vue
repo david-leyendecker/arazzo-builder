@@ -756,7 +756,7 @@ const handleBlur = () => {
 .section-header {
   display: flex;
   align-items: center;
-  justify-between;
+  justify-content: space-between;
 }
 
 .items-list {

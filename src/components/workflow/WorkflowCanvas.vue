@@ -210,7 +210,7 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 .header-content {
   display: flex;
   align-items: center;
-  justify-between;
+  justify-content: space-between;
 }
 
 .app-title {
