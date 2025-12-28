@@ -56,7 +56,9 @@ const addNextStep = () => {
       operationId: '',
       description: '',
       parameters: [],
-      successCriteria: []
+      successCriteria: [],
+      onSuccess: [],
+      onFailure: []
     },
     position
   })

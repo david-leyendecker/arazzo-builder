@@ -14,6 +14,22 @@ export interface ArazzoParameter {
 }
 
 /**
+ * Represents a reusable reference to components, parameters, or actions
+ * e.g., { $ref: '#/components/parameters/MyParam' } or a source-based ref
+ */
+export interface ArazzoReusableRef {
+  $ref: string;
+}
+
+/**
+ * Workflow-level success/failure actions
+ * The Arazzo spec allows success/failure action objects or reusable refs.
+ * We model action objects as generic maps for forward-compatibility.
+ */
+export type ArazzoSuccessAction = Record<string, unknown>;
+export type ArazzoFailureAction = Record<string, unknown>;
+
+/**
  * Represents a criterion target for step flow control
  */
 export interface ArazzoCriterionTarget {
@@ -32,8 +48,8 @@ export interface ArazzoStep {
   parameters?: ArazzoParameter[];
   requestBody?: Record<string, unknown>;
   successCriteria?: string[];
-  onSuccess?: ArazzoCriterionTarget[];
-  onFailure?: ArazzoCriterionTarget[];
+  onSuccess: ArazzoCriterionTarget[];
+  onFailure: ArazzoCriterionTarget[];
   outputs?: Record<string, unknown>;
 }
 
@@ -61,9 +77,13 @@ export interface ArazzoWorkflow {
     workflowId: string;
     summary?: string;
     description?: string;
-    inputs?: Record<string, unknown>;
+    inputs?: Record<string, unknown>; // JSON Schema 2020-12 object
+    dependsOn?: string[];
     steps: ArazzoStep[];
+    successActions?: (ArazzoSuccessAction | ArazzoReusableRef)[];
+    failureActions?: (ArazzoFailureAction | ArazzoReusableRef)[];
     outputs?: Record<string, unknown>;
+    parameters?: (ArazzoParameter | ArazzoReusableRef)[];
   }[];
 }
 

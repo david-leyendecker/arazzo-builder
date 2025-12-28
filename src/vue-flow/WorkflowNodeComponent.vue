@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { NodeToolbar } from '@vue-flow/node-toolbar'
 import { useWorkflowStore } from '../stores/workflow'
@@ -13,6 +14,7 @@ interface Props {
 
 const props = defineProps<Props>()
 const workflowStore = useWorkflowStore()
+const mw = computed(() => workflowStore.mainWorkflow!)
 
 const addStep = () => {
   const timestamp = Date.now()
@@ -36,7 +38,9 @@ const addStep = () => {
       operationId: '',
       description: '',
       parameters: [],
-      successCriteria: []
+      successCriteria: [],
+      onSuccess: [],
+      onFailure: []
     },
     position
   })
@@ -61,6 +65,13 @@ const addStep = () => {
     </NodeToolbar>
     <div class="font-bold text-sm mb-1">Workflow</div>
     <div class="text-xs">{{ data.workflowId }}</div>
+    <div v-if="mw" class="mt-2 text-xs opacity-90">
+      <div v-if="mw.summary">{{ mw.summary }}</div>
+      <div class="mt-1 flex gap-2">
+        <span>Steps: {{ mw.steps.length }}</span>
+        <span v-if="mw.dependsOn && mw.dependsOn.length > 0">Deps: {{ mw.dependsOn.length }}</span>
+      </div>
+    </div>
     <Handle type="source" :position="Position.Right" id="steps" class="!bg-purple-300" />
   </div>
 </template>

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import yaml from 'js-yaml'
-import type { ArazzoWorkflow, ArazzoSourceDescription, ArazzoStep, ArazzoCriterionTarget, WorkflowNode, WorkflowConnection } from '../types/arazzo'
+import type { ArazzoWorkflow, ArazzoSourceDescription, ArazzoStep, ArazzoCriterionTarget, WorkflowNode, WorkflowConnection, ArazzoParameter, ArazzoReusableRef, ArazzoSuccessAction, ArazzoFailureAction } from '../types/arazzo'
 import type { ParsedOpenAPISpec } from '../services/openapi-service'
 import { fetchOpenAPISpec } from '../services/openapi-service'
 
@@ -57,7 +57,7 @@ export const useWorkflowStore = defineStore('workflow', {
   }),
 
   getters: {
-    mainWorkflow: (state) => state.workflow.workflows[0],
+    mainWorkflow: (state): NonNullable<ArazzoWorkflow['workflows'][0]> => state.workflow.workflows[0]!,
     
     selectedNode: (state) => {
       if (!state.selectedNodeId) return null
@@ -174,6 +174,8 @@ export const useWorkflowStore = defineStore('workflow', {
       // Add to steps if it's a step node
       if (node.type === 'step' && this.workflow.workflows[0]) {
         const stepData = node.data as ArazzoStep
+        if (!stepData.onSuccess) stepData.onSuccess = []
+        if (!stepData.onFailure) stepData.onFailure = []
         this.workflow.workflows[0].steps.push(stepData)
       }
       
@@ -228,6 +230,32 @@ export const useWorkflowStore = defineStore('workflow', {
         }
       }
       
+      this.saveWorkflowToStorage()
+    },
+
+    /**
+     * Update top-level main workflow fields (summary, description, inputs, dependsOn, parameters, success/failure actions, outputs)
+     */
+    updateMainWorkflow(data: Partial<{
+      summary: string
+      description: string
+      inputs: Record<string, unknown> | undefined
+      dependsOn: string[]
+      parameters: (ArazzoParameter | ArazzoReusableRef)[]
+      successActions: (ArazzoSuccessAction | ArazzoReusableRef)[]
+      failureActions: (ArazzoFailureAction | ArazzoReusableRef)[]
+      outputs: Record<string, unknown>
+    }>) {
+      const workflow = this.workflow.workflows[0]
+      if (!workflow) return
+      if (data.summary !== undefined) workflow.summary = data.summary
+      if (data.description !== undefined) workflow.description = data.description
+      if (data.inputs !== undefined) workflow.inputs = data.inputs
+      if (data.dependsOn !== undefined) workflow.dependsOn = data.dependsOn
+      if (data.parameters !== undefined) workflow.parameters = data.parameters
+      if (data.successActions !== undefined) workflow.successActions = data.successActions
+      if (data.failureActions !== undefined) workflow.failureActions = data.failureActions
+      if (data.outputs !== undefined) workflow.outputs = data.outputs
       this.saveWorkflowToStorage()
     },
 
@@ -413,14 +441,33 @@ export const useWorkflowStore = defineStore('workflow', {
     validateWorkflow(): { valid: boolean; errors: string[] } {
       const errors: string[] = []
       const workflow = this.workflow.workflows[0]
+      const workflowIdRegex = /^[A-Za-z0-9_\-]+$/
+      const outputKeyRegex = /^[a-zA-Z0-9._-]+$/
       
       if (!workflow) {
         errors.push('No workflow defined')
         return { valid: false, errors }
       }
+
+      // Required workflowId
+      if (!workflow.workflowId || workflow.workflowId.trim() === '') {
+        errors.push('Workflow is missing a workflowId')
+      } else if (!workflowIdRegex.test(workflow.workflowId)) {
+        errors.push(`Workflow ID "${workflow.workflowId}" must match [A-Za-z0-9_\-]+`)
+      }
+
+      // Required steps array
+      if (!Array.isArray(workflow.steps) || workflow.steps.length === 0) {
+        errors.push('Workflow must contain at least one step')
+      }
       
       // Check each step has an operationId
       workflow.steps.forEach(step => {
+        if (!step.stepId || step.stepId.trim() === '') {
+          errors.push('A step is missing stepId')
+        }
+        if (!step.onSuccess) step.onSuccess = []
+        if (!step.onFailure) step.onFailure = []
         if (!step.operationId || step.operationId.trim() === '') {
           errors.push(`Step "${step.stepId}" is missing an operationId`)
         } else if (this.parsedSpecs.length > 0) {
@@ -430,7 +477,25 @@ export const useWorkflowStore = defineStore('workflow', {
             errors.push(`Step "${step.stepId}": ${validation.error}`)
           }
         }
+
+        // Validate step outputs key format (reuse workflow output regex)
+        if (step.outputs) {
+          Object.keys(step.outputs).forEach(key => {
+            if (!outputKeyRegex.test(key)) {
+              errors.push(`Step "${step.stepId}" output key "${key}" must match ^[a-zA-Z0-9._-]+$`)
+            }
+          })
+        }
       })
+
+      // Validate workflow-level outputs
+      if (workflow.outputs) {
+        Object.keys(workflow.outputs).forEach(key => {
+          if (!outputKeyRegex.test(key)) {
+            errors.push(`Workflow output key "${key}" must match ^[a-zA-Z0-9._-]+$`)
+          }
+        })
+      }
       
       // Check for orphaned nodes (nodes with no connections)
       const connectedNodes = new Set<string>()
@@ -470,6 +535,7 @@ export const useWorkflowStore = defineStore('workflow', {
           summary: w.summary,
           description: w.description,
           ...(w.inputs && Object.keys(w.inputs).length > 0 ? { inputs: w.inputs } : {}),
+          ...(w.dependsOn && w.dependsOn.length > 0 ? { dependsOn: w.dependsOn } : {}),
           steps: w.steps.map(step => {
             const cleanStep: Partial<ArazzoStep> = {
               stepId: step.stepId,
@@ -498,7 +564,11 @@ export const useWorkflowStore = defineStore('workflow', {
             
             return cleanStep as ArazzoStep
           }),
+          ...(w.successActions && w.successActions.length > 0 ? { successActions: w.successActions } : {}),
+          ...(w.failureActions && w.failureActions.length > 0 ? { failureActions: w.failureActions } : {}),
           ...(w.outputs && Object.keys(w.outputs).length > 0 ? { outputs: w.outputs } : {})
+          ,
+          ...(w.parameters && w.parameters.length > 0 ? { parameters: w.parameters } : {})
         }))
       }
       

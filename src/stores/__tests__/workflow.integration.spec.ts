@@ -108,7 +108,7 @@ describe('useWorkflowStore - Integration Tests', () => {
 
       // Add connections in sequence (start/end are UI-only)
       steps.forEach((stepId, idx) => {
-        const nextId = idx < steps.length - 1 ? steps[idx + 1] : 'end'
+        const nextId: string = idx < steps.length - 1 ? steps[idx + 1]! : 'end'
         store.addConnection({ id: `c${idx}`, source: stepId, target: nextId })
       })
 

@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue'
 import { useWorkflowStore } from '../../stores/workflow'
 import { filterOperations } from '../../services/openapi-service'
-import type { ArazzoParameter } from '../../types/arazzo'
+import type { ArazzoParameter, ArazzoReusableRef } from '../../types/arazzo'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
@@ -17,7 +17,193 @@ const selectedStep = computed(() => workflowStore.selectedStep)
 const hasSelection = computed(() => selectedNode.value !== null)
 const isStepNode = computed(() => selectedNode.value?.type === 'step')
 const isWorkflowNode = computed(() => selectedNode.value?.type === 'workflow')
-const isStartOrEndNode = computed(() => selectedNode.value?.type === 'start' || selectedNode.value?.type === 'end')
+// Live validation view
+const validationResult = computed(() => workflowStore.validateWorkflow())
+const validationErrors = computed(() => validationResult.value.errors)
+// Main workflow helpers
+const mainWorkflow = computed(() => workflowStore.mainWorkflow)
+
+const updateWorkflowSummary = (event: Event) => {
+  const value = (event.target as HTMLInputElement).value
+  workflowStore.updateMainWorkflow({ summary: value })
+}
+
+const updateWorkflowDescription = (event: Event) => {
+  const value = (event.target as HTMLTextAreaElement).value
+  workflowStore.updateMainWorkflow({ description: value })
+}
+
+// Inputs (JSON Schema) management
+const updateWorkflowInputs = (value: string) => {
+  try {
+    const parsed = value ? JSON.parse(value) : undefined
+    workflowStore.updateMainWorkflow({ inputs: parsed })
+  } catch (e) {
+    console.warn('Invalid JSON for inputs')
+  }
+}
+
+// DependsOn management
+const addDependsOn = () => {
+  const list = [...(mainWorkflow.value?.dependsOn || [])]
+  list.push('')
+  workflowStore.updateMainWorkflow({ dependsOn: list })
+}
+
+const removeDependsOn = (index: number) => {
+  const list = [...(mainWorkflow.value?.dependsOn || [])]
+  list.splice(index, 1)
+  workflowStore.updateMainWorkflow({ dependsOn: list })
+}
+
+const updateDependsOn = (index: number, value: string) => {
+  const list = [...(mainWorkflow.value?.dependsOn || [])]
+  list[index] = value
+  workflowStore.updateMainWorkflow({ dependsOn: list })
+}
+
+// Workflow-level Parameters (ArazzoParameter | $ref)
+const addWorkflowParameter = () => {
+  const params = [...(mainWorkflow.value?.parameters || [])]
+  const newParam: ArazzoParameter = { name: '', in: 'query', value: '' }
+  params.push(newParam)
+  workflowStore.updateMainWorkflow({ parameters: params })
+}
+
+const removeWorkflowParameter = (index: number) => {
+  const params = [...(mainWorkflow.value?.parameters || [])]
+  params.splice(index, 1)
+  workflowStore.updateMainWorkflow({ parameters: params })
+}
+
+const toggleWorkflowParameterRef = (index: number, useRef: boolean) => {
+  const params = [...(mainWorkflow.value?.parameters || [])]
+  if (!params[index]) return
+  if (useRef) {
+    params[index] = { $ref: '' } as ArazzoReusableRef
+  } else {
+    params[index] = { name: '', in: 'query', value: '' }
+  }
+  workflowStore.updateMainWorkflow({ parameters: params })
+}
+
+const updateWorkflowParameterField = (index: number, field: keyof ArazzoParameter, value: any) => {
+  const params = [...(mainWorkflow.value?.parameters || [])]
+  const item = params[index]
+  if (!item || (item as ArazzoReusableRef).$ref !== undefined) return
+  params[index] = { ...(item as ArazzoParameter), [field]: value }
+  workflowStore.updateMainWorkflow({ parameters: params })
+}
+
+const updateWorkflowParameterRef = (index: number, refValue: string) => {
+  const params = [...(mainWorkflow.value?.parameters || [])]
+  const item = params[index]
+  if (!item) return
+  params[index] = { $ref: refValue } as ArazzoReusableRef
+  workflowStore.updateMainWorkflow({ parameters: params })
+}
+
+// Workflow-level Success/Failure Actions (Record | $ref)
+const addSuccessAction = () => {
+  const actions = [...(mainWorkflow.value?.successActions || [])]
+  actions.push({})
+  workflowStore.updateMainWorkflow({ successActions: actions })
+}
+
+const removeSuccessAction = (index: number) => {
+  const actions = [...(mainWorkflow.value?.successActions || [])]
+  actions.splice(index, 1)
+  workflowStore.updateMainWorkflow({ successActions: actions })
+}
+
+const setSuccessActionRefMode = (index: number, useRef: boolean) => {
+  const actions = [...(mainWorkflow.value?.successActions || [])]
+  if (!actions[index]) return
+  actions[index] = useRef ? ({ $ref: '' } as ArazzoReusableRef) : {}
+  workflowStore.updateMainWorkflow({ successActions: actions })
+}
+
+const updateSuccessActionRef = (index: number, refValue: string) => {
+  const actions = [...(mainWorkflow.value?.successActions || [])]
+  actions[index] = { $ref: refValue } as ArazzoReusableRef
+  workflowStore.updateMainWorkflow({ successActions: actions })
+}
+
+const updateSuccessActionJSON = (index: number, value: string) => {
+  try {
+    const obj = value ? JSON.parse(value) : {}
+    const actions = [...(mainWorkflow.value?.successActions || [])]
+    actions[index] = obj
+    workflowStore.updateMainWorkflow({ successActions: actions })
+  } catch (e) {
+    console.warn('Invalid JSON for success action')
+  }
+}
+
+const addFailureAction = () => {
+  const actions = [...(mainWorkflow.value?.failureActions || [])]
+  actions.push({})
+  workflowStore.updateMainWorkflow({ failureActions: actions })
+}
+
+const removeFailureAction = (index: number) => {
+  const actions = [...(mainWorkflow.value?.failureActions || [])]
+  actions.splice(index, 1)
+  workflowStore.updateMainWorkflow({ failureActions: actions })
+}
+
+const setFailureActionRefMode = (index: number, useRef: boolean) => {
+  const actions = [...(mainWorkflow.value?.failureActions || [])]
+  if (!actions[index]) return
+  actions[index] = useRef ? ({ $ref: '' } as ArazzoReusableRef) : {}
+  workflowStore.updateMainWorkflow({ failureActions: actions })
+}
+
+const updateFailureActionRef = (index: number, refValue: string) => {
+  const actions = [...(mainWorkflow.value?.failureActions || [])]
+  actions[index] = { $ref: refValue } as ArazzoReusableRef
+  workflowStore.updateMainWorkflow({ failureActions: actions })
+}
+
+const updateFailureActionJSON = (index: number, value: string) => {
+  try {
+    const obj = value ? JSON.parse(value) : {}
+    const actions = [...(mainWorkflow.value?.failureActions || [])]
+    actions[index] = obj
+    workflowStore.updateMainWorkflow({ failureActions: actions })
+  } catch (e) {
+    console.warn('Invalid JSON for failure action')
+  }
+}
+
+// Workflow-level Outputs
+const addWorkflowOutput = () => {
+  const outputs = { ...(mainWorkflow.value?.outputs || {}) }
+  const newKey = `output${Object.keys(outputs).length + 1}`
+  outputs[newKey] = ''
+  workflowStore.updateMainWorkflow({ outputs })
+}
+
+const removeWorkflowOutput = (key: string) => {
+  const outputs = { ...(mainWorkflow.value?.outputs || {}) }
+  delete outputs[key]
+  workflowStore.updateMainWorkflow({ outputs })
+}
+
+const updateWorkflowOutputKey = (oldKey: string, newKey: string) => {
+  if (oldKey === newKey) return
+  const outputs = { ...(mainWorkflow.value?.outputs || {}) }
+  const value = outputs[oldKey]
+  delete outputs[oldKey]
+  outputs[newKey] = value
+  workflowStore.updateMainWorkflow({ outputs })
+}
+
+const updateWorkflowOutputValue = (key: string, value: any) => {
+  const outputs = { ...(mainWorkflow.value?.outputs || {}) }
+  outputs[key] = value
+  workflowStore.updateMainWorkflow({ outputs })
+}
 
 // OperationId suggestions
 const operationIdInput = ref('')
@@ -101,7 +287,7 @@ const autoPopulateParameters = (operationId: string) => {
   
   // Only auto-populate if no parameters exist yet
   if (!currentStep.parameters || currentStep.parameters.length === 0) {
-    const parameters: ArazzoParameter[] = operation.parameters.map(param => ({
+    const parameters: ArazzoParameter[] = (operation.parameters as any[]).map((param: any) => ({
       name: param.name,
       in: param.in,
       value: '', // Default empty value
@@ -273,6 +459,14 @@ const handleBlur = () => {
   <div class="contextual-inspector">
     <h2 class="inspector-title">Inspector</h2>
 
+    <!-- Validation Errors Panel -->
+    <div v-if="validationErrors.length > 0" class="mb-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 text-sm text-red-800 dark:text-red-200 space-y-2">
+      <div class="font-semibold">Validation issues</div>
+      <ul class="list-disc list-inside space-y-1">
+        <li v-for="(err, idx) in validationErrors" :key="idx">{{ err }}</li>
+      </ul>
+    </div>
+
     <!-- No Selection State -->
     <div v-if="!hasSelection" class="empty-state">
       <i class="pi pi-info-circle empty-icon"></i>
@@ -287,33 +481,180 @@ const handleBlur = () => {
       </div>
 
       <!-- Workflow Node -->
-      <div v-if="isWorkflowNode && selectedNode" class="field-group">
-        <div class="field">
-          <label class="field-label">Workflow ID</label>
-          <InputText
+      <div v-if="isWorkflowNode && selectedNode" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Workflow ID</label>
+          <input
+            type="text"
             :value="(selectedNode.data as { workflowId: string }).workflowId"
             readonly
             class="field-input"
           />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Right-click this node to add steps.</p>
         </div>
-        <Message severity="info" :closable="false" class="info-message">
-          Right-click this node to add steps to your workflow.
-        </Message>
-      </div>
 
-      <!-- Start/End Node -->
-      <div v-else-if="isStartOrEndNode && selectedNode" class="field-group">
-        <div class="field">
-          <label class="field-label">Node ID</label>
-          <InputText
-            :value="selectedNode.id"
-            readonly
-            class="field-input"
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Summary</label>
+          <input
+            type="text"
+            :value="mainWorkflow?.summary || ''"
+            @input="updateWorkflowSummary"
+            placeholder="Brief summary of workflow"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100"
           />
         </div>
-        <Message severity="info" :closable="false" class="info-message">
-          {{ selectedNode.type === 'start' ? 'Marks the beginning of workflow execution.' : 'Marks the end of workflow execution.' }}
-        </Message>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+          <textarea
+            :value="mainWorkflow?.description || ''"
+            @input="updateWorkflowDescription"
+            rows="3"
+            placeholder="CommonMark supported"
+            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100"
+          ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Inputs (JSON Schema)</label>
+          <textarea
+            :value="mainWorkflow?.inputs ? JSON.stringify(mainWorkflow.inputs, null, 2) : ''"
+            @blur="(e) => updateWorkflowInputs((e.target as HTMLTextAreaElement).value)"
+            rows="4"
+            placeholder='{ "type": "object", "properties": { ... } }'
+            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 font-mono text-xs"
+          ></textarea>
+        </div>
+
+        <!-- dependsOn -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Depends On</label>
+            <button @click="addDependsOn" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">+ Add</button>
+          </div>
+          <div v-if="!mainWorkflow?.dependsOn || mainWorkflow.dependsOn.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">No dependencies</div>
+          <div v-else class="space-y-2">
+            <div v-for="(dep, index) in mainWorkflow.dependsOn" :key="index" class="flex items-start gap-2">
+              <input
+                type="text"
+                :value="dep"
+                @input="(e) => updateDependsOn(index, (e.target as HTMLInputElement).value)"
+                placeholder="$sourceDescriptions.name.workflowId or local workflowId"
+                class="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+              />
+              <button @click="removeDependsOn(index)" class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400" title="Remove">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow Parameters -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Workflow Parameters</label>
+            <button @click="addWorkflowParameter" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">+ Add</button>
+          </div>
+          <div v-if="!mainWorkflow?.parameters || mainWorkflow.parameters.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">No parameters</div>
+          <div v-else class="space-y-3">
+            <div v-for="(param, index) in mainWorkflow.parameters" :key="index" class="p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2 text-xs">
+                  <label class="inline-flex items-center gap-1"><input type="checkbox" :checked="(param as any).$ref !== undefined" @change="(e) => toggleWorkflowParameterRef(index, (e.target as HTMLInputElement).checked)" /> Use $ref</label>
+                </div>
+                <button @click="removeWorkflowParameter(index)" class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400" title="Remove">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div v-if="(param as any).$ref !== undefined" class="grid grid-cols-1 gap-2">
+                <input type="text" :value="(param as any).$ref" @input="(e) => updateWorkflowParameterRef(index, (e.target as HTMLInputElement).value)" placeholder="#/components/parameters/MyParam" class="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100" />
+              </div>
+              <div v-else class="grid grid-cols-2 gap-2">
+                <input type="text" :value="(param as any).name" @input="(e) => updateWorkflowParameterField(index, 'name', (e.target as HTMLInputElement).value)" placeholder="Parameter name" class="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100" />
+                <select :value="(param as any).in" @change="(e) => updateWorkflowParameterField(index, 'in', (e.target as HTMLSelectElement).value)" class="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100">
+                  <option value="path">Path</option>
+                  <option value="query">Query</option>
+                  <option value="header">Header</option>
+                  <option value="cookie">Cookie</option>
+                  <option value="body">Body</option>
+                </select>
+                <input type="text" :value="(param as any).value" @input="(e) => updateWorkflowParameterField(index, 'value', (e.target as HTMLInputElement).value)" placeholder="Value or expression" class="col-span-2 px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success Actions -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Success Actions</label>
+            <button @click="addSuccessAction" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">+ Add</button>
+          </div>
+          <div v-if="!mainWorkflow?.successActions || mainWorkflow.successActions.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">None</div>
+          <div v-else class="space-y-3">
+            <div v-for="(action, index) in mainWorkflow.successActions" :key="index" class="p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600">
+              <div class="flex items-center justify-between mb-2">
+                <label class="inline-flex items-center gap-1 text-xs"><input type="checkbox" :checked="(action as any).$ref !== undefined" @change="(e) => setSuccessActionRefMode(index, (e.target as HTMLInputElement).checked)" /> Use $ref</label>
+                <button @click="removeSuccessAction(index)" class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400" title="Remove">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div v-if="(action as any).$ref !== undefined" class="grid grid-cols-1 gap-2">
+                <input type="text" :value="(action as any).$ref" @input="(e) => updateSuccessActionRef(index, (e.target as HTMLInputElement).value)" placeholder="#/components/successActions/MyAction" class="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100" />
+              </div>
+              <div v-else>
+                <label class="text-xs text-gray-600 dark:text-gray-400">Action (JSON)</label>
+                <textarea :value="JSON.stringify(action, null, 2)" @blur="(e) => updateSuccessActionJSON(index, (e.target as HTMLTextAreaElement).value)" rows="3" class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 font-mono"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Failure Actions -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Failure Actions</label>
+            <button @click="addFailureAction" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">+ Add</button>
+          </div>
+          <div v-if="!mainWorkflow?.failureActions || mainWorkflow.failureActions.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">None</div>
+          <div v-else class="space-y-3">
+            <div v-for="(action, index) in mainWorkflow.failureActions" :key="index" class="p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600">
+              <div class="flex items-center justify-between mb-2">
+                <label class="inline-flex items-center gap-1 text-xs"><input type="checkbox" :checked="(action as any).$ref !== undefined" @change="(e) => setFailureActionRefMode(index, (e.target as HTMLInputElement).checked)" /> Use $ref</label>
+                <button @click="removeFailureAction(index)" class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400" title="Remove">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <div v-if="(action as any).$ref !== undefined" class="grid grid-cols-1 gap-2">
+                <input type="text" :value="(action as any).$ref" @input="(e) => updateFailureActionRef(index, (e.target as HTMLInputElement).value)" placeholder="#/components/failureActions/MyAction" class="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100" />
+              </div>
+              <div v-else>
+                <label class="text-xs text-gray-600 dark:text-gray-400">Action (JSON)</label>
+                <textarea :value="JSON.stringify(action, null, 2)" @blur="(e) => updateFailureActionJSON(index, (e.target as HTMLTextAreaElement).value)" rows="3" class="w-full px-2 py-1 text-xs border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 font-mono"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Workflow Outputs -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Workflow Outputs</label>
+            <button @click="addWorkflowOutput" class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium">+ Add</button>
+          </div>
+          <div v-if="!mainWorkflow?.outputs || Object.keys(mainWorkflow.outputs).length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">None</div>
+          <div v-else class="space-y-3">
+            <div v-for="(value, key) in mainWorkflow.outputs" :key="key" class="p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600">
+              <div class="flex items-start justify-between mb-2">
+                <input type="text" :value="key" @blur="(e) => updateWorkflowOutputKey(key as string, (e.target as HTMLInputElement).value)" placeholder="Output name" class="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100" />
+                <button @click="removeWorkflowOutput(key as string)" class="ml-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400" title="Remove">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              </div>
+              <input type="text" :value="value as any" @input="(e) => updateWorkflowOutputValue(key as string, (e.target as HTMLInputElement).value)" placeholder="Expression (e.g., $response.body.userId)" class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100" />
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Step Node (original content) -->
@@ -583,7 +924,7 @@ const handleBlur = () => {
             :key="index"
             class="flow-item success-flow"
           >
-            {{ target.type === 'end' ? 'End workflow' : `Go to step: ${target.stepId}` }}
+            {{ `Go to step: ${target.stepId}` }}
           </div>
         </div>
         <p class="help-text">Connect the green handle to define success flow</p>
@@ -601,7 +942,7 @@ const handleBlur = () => {
             :key="index"
             class="flow-item failure-flow"
           >
-            {{ target.type === 'end' ? 'End workflow' : `Go to step: ${target.stepId}` }}
+            {{ `Go to step: ${target.stepId}` }}
           </div>
         </div>
         <p class="help-text">Connect the red handle to define failure flow</p>

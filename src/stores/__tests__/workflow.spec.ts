@@ -3,6 +3,8 @@ import { setActivePinia, createPinia } from 'pinia'
 import { useWorkflowStore } from '../workflow'
 import type { WorkflowNode, WorkflowConnection } from '../../types/arazzo'
 
+const globalAny: any = globalThis as any
+
 describe('useWorkflowStore', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
@@ -299,7 +301,7 @@ describe('useWorkflowStore', () => {
       expect(store.operationMap.size).toBe(1)
 
       // Mock the fetch
-      vi.spyOn(global, 'fetch').mockResolvedValueOnce({
+      vi.spyOn(globalAny, 'fetch').mockResolvedValueOnce({
         json: async () => ({ openapi: '3.0.0', paths: {} })
       } as any)
 
