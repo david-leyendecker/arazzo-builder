@@ -32,6 +32,14 @@ const confirmTitle = computed(() => {
   return confirmationType.value === 'remove' ? 'Remove OpenAPI source?' : 'Switch OpenAPI source?'
 })
 
+const confirmButtonText = computed(() => {
+  return confirmationType.value === 'remove' ? 'Delete' : 'Continue'
+})
+
+const isDestructive = computed(() => {
+  return confirmationType.value === 'remove'
+})
+
 const addSource = () => {
   if (newSource.value.name && newSource.value.url) {
     workflowStore.addSourceDescription({
@@ -227,9 +235,9 @@ const cancelAdd = () => {
       v-model:open="confirmOpen"
       :title="confirmTitle"
       :message="confirmMessage"
-      confirmText="Delete"
+      :confirmText="confirmButtonText"
       cancelText="Cancel"
-      :destructive="true"
+      :destructive="isDestructive"
       @confirm="handleConfirm"
       @cancel="handleCancel"
     />
