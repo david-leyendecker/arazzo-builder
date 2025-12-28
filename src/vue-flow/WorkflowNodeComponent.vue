@@ -40,6 +40,15 @@ const addStep = () => {
     },
     position
   })
+
+  // Visually connect workflow root to the new step
+  workflowStore.addConnection({
+    id: `conn-${props.id}-${id}-${timestamp}`,
+    source: props.id,
+    target: id,
+    sourceHandle: 'steps',
+    targetHandle: 'prev'
+  })
 }
 </script>
 

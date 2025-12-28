@@ -57,6 +57,21 @@ const addNextStep = () => {
     },
     position
   })
+
+  // Connect current step to the newly created step to preserve visual and logical order
+  workflowStore.addConnection({
+    id: `conn-${props.id}-${id}-${timestamp}`,
+    source: props.id,
+    target: id,
+    sourceHandle: 'success',
+    targetHandle: 'prev'
+  })
+}
+
+const deleteStep = () => {
+  const confirmed = window.confirm('Delete this step and reconnect the flow?')
+  if (!confirmed) return
+  workflowStore.removeStepWithReconnect(props.id)
 }
 </script>
 
@@ -66,6 +81,9 @@ const addNextStep = () => {
       <div class="toolbar-buttons">
         <button @click="addNextStep" class="toolbar-button" title="Add Next Step">
           ➕ Next Step
+        </button>
+        <button @click="deleteStep" class="toolbar-button danger" title="Delete Step">
+          ✖ Delete
         </button>
       </div>
     </NodeToolbar>
@@ -154,6 +172,16 @@ const addNextStep = () => {
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+}
+
+.toolbar-button.danger {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.toolbar-button.danger:hover {
+  background-color: #ef4444;
+  color: white;
 }
 
 .toolbar-button:hover {

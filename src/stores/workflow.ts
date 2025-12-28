@@ -153,6 +153,52 @@ export const useWorkflowStore = defineStore('workflow', {
       }
     },
 
+    /**
+     * Remove a step node while reconnecting its incoming edges to its outgoing edges
+     * to preserve the flow order.
+     */
+    removeStepWithReconnect(stepId: string) {
+      const node = this.nodes.find(n => n.id === stepId)
+      if (!node || node.type !== 'step') return
+
+      // Capture existing connections before removal
+      const incoming = this.connections.filter(c => c.target === stepId)
+      const outgoing = this.connections.filter(c => c.source === stepId)
+
+      // Create new connections bridging incoming sources to outgoing targets
+      incoming.forEach(inConn => {
+        outgoing.forEach(outConn => {
+          // Avoid duplicate connections
+          const exists = this.connections.some(c =>
+            c.source === inConn.source &&
+            c.target === outConn.target &&
+            (c.sourceHandle || 'success') === (inConn.sourceHandle || 'success') &&
+            (c.targetHandle || 'prev') === (outConn.targetHandle || 'prev')
+          )
+          if (exists) return
+
+          this.connections.push({
+            id: `reconn-${inConn.source}-${outConn.target}-${Date.now()}`,
+            source: inConn.source,
+            target: outConn.target,
+            sourceHandle: inConn.sourceHandle || 'success',
+            targetHandle: outConn.targetHandle || 'prev'
+          })
+        })
+      })
+
+      // Remove the node and its original connections
+      this.removeNode(stepId)
+
+      // Update paths to reflect new wiring
+      this.updateConnectionPaths()
+
+      // Clear selection if it was the deleted node
+      if (this.selectedNodeId === stepId) {
+        this.selectedNodeId = null
+      }
+    },
+
     addConnection(connection: WorkflowConnection) {
       this.connections.push(connection)
       this.updateConnectionPaths()
