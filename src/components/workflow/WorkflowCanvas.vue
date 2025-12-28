@@ -232,18 +232,14 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
   position: absolute;
   bottom: 1rem;
   left: 1rem;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(8px);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
   color: var(--text-secondary);
   z-index: 10;
-}
-
-:global(.dark) .help-panel {
-  background: rgba(15, 23, 42, 0.9);
 }
 
 .help-title {
