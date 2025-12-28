@@ -22,7 +22,7 @@ import '@vue-flow/minimap/dist/style.css'
 const workflowStore = useWorkflowStore()
 
 // Vue Flow composable
-const { onConnect, project } = useVueFlow()
+const { onConnect } = useVueFlow()
 
 // Node types mapping - use markRaw to prevent Vue reactivity on components
 const nodeTypes = markRaw({
@@ -132,8 +132,8 @@ const addNodeAtCursor = (nodeType: string) => {
   const timestamp = Date.now()
   const id = `${nodeType}-${timestamp}`
   
-  // Get the position relative to the flow
-  const position = project({ x: window.innerWidth / 2, y: window.innerHeight / 2 })
+  // Position at center of viewport
+  const position = { x: 250, y: 150 }
   
   const nodeData = createNodeData(nodeType, id)
   

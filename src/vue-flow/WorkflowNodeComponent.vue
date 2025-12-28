@@ -5,6 +5,7 @@ import { useWorkflowStore } from '../stores/workflow'
 
 interface Props {
   id: string
+  selected?: boolean
   data: {
     workflowId: string
   }
@@ -44,7 +45,7 @@ const addStep = () => {
 
 <template>
   <div class="workflow-node bg-purple-500 text-white rounded-lg shadow-lg p-4 min-w-[200px]">
-    <NodeToolbar :is-visible="true" :position="Position.Top">
+    <NodeToolbar :is-visible="selected" :position="Position.Top">
       <button @click="addStep" class="toolbar-button">
         ➕ Add Step
       </button>
