@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useThemeStore } from '../../stores/theme'
 import { computed } from 'vue'
+import Button from 'primevue/button'
 
 const themeStore = useThemeStore()
 
 const currentIcon = computed(() => {
-  return themeStore.isDark ? '🌙' : '☀️'
+  return themeStore.isDark ? 'pi-moon' : 'pi-sun'
 })
 
 const currentLabel = computed(() => {
@@ -28,16 +29,14 @@ const cycleTheme = () => {
 </script>
 
 <template>
-  <button
+  <Button
     @click="cycleTheme"
-    class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-           bg-gray-100 hover:bg-gray-200 text-gray-700
-           dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-200"
+    :icon="`pi ${currentIcon}`"
+    :label="currentLabel"
     :title="`Current theme: ${currentLabel}. Click to cycle through themes.`"
-  >
-    <span class="text-lg">{{ currentIcon }}</span>
-    <span class="hidden sm:inline">{{ currentLabel }}</span>
-  </button>
+    outlined
+    size="small"
+  />
 </template>
 
 <style scoped>

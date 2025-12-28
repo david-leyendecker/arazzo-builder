@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import PrimeVue from 'primevue/config'
 import './style.css'
 import App from './App.vue'
 import { useThemeStore } from './stores/theme'
@@ -9,6 +10,9 @@ const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia)
+app.use(PrimeVue, {
+  // Use default PrimeVue styling
+})
 
 // Initialize theme system after pinia is installed
 const themeStore = useThemeStore()

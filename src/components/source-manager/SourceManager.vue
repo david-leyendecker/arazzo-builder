@@ -2,6 +2,10 @@
 import { ref, computed } from 'vue'
 import { useWorkflowStore } from '../../stores/workflow'
 import ConfirmModal from '../common/ConfirmModal.vue'
+import Button from 'primevue/button'
+import InputText from 'primevue/inputtext'
+import Select from 'primevue/select'
+import Card from 'primevue/card'
 
 const workflowStore = useWorkflowStore()
 
@@ -13,6 +17,11 @@ const newSource = ref({
   url: '',
   type: 'openapi' as 'openapi' | 'arazzo'
 })
+
+const sourceTypeOptions = [
+  { label: 'OpenAPI', value: 'openapi' },
+  { label: 'Arazzo', value: 'arazzo' }
+]
 
 const confirmOpen = ref(false)
 const pendingRemoval = ref<(typeof sources.value)[number] | null>(null)
@@ -131,103 +140,97 @@ const cancelAdd = () => {
 </script>
 
 <template>
-  <div class="source-manager p-4">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">OpenAPI Sources</h2>
-      <button
-        @click="showAddForm = true"
+  <div class="source-manager">
+    <div class="header">
+      <h2 class="title">OpenAPI Sources</h2>
+      <Button
         v-if="!showAddForm"
-        class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-      >
-        + Add
-      </button>
+        @click="showAddForm = true"
+        label="Add"
+        icon="pi pi-plus"
+        text
+        size="small"
+      />
     </div>
 
     <!-- Add Source Form -->
-    <div v-if="showAddForm" class="mb-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600">
-      <div class="space-y-2">
-        <div>
-          <input
+    <Card v-if="showAddForm" class="add-form">
+      <template #content>
+        <div class="form-fields">
+          <InputText
             v-model="newSource.name"
-            type="text"
             placeholder="Source name"
-            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+            class="input-field"
           />
-        </div>
-        <div>
-          <input
+          <InputText
             v-model="newSource.url"
-            type="text"
             placeholder="URL or path"
-            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+            class="input-field"
           />
-        </div>
-        <div>
-          <select
+          <Select
             v-model="newSource.type"
-            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
-          >
-            <option value="openapi">OpenAPI</option>
-            <option value="arazzo">Arazzo</option>
-          </select>
+            :options="sourceTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            class="input-field"
+          />
+          <div class="form-actions">
+            <Button
+              @click="addSource"
+              label="Add"
+              size="small"
+            />
+            <Button
+              @click="cancelAdd"
+              label="Cancel"
+              severity="secondary"
+              outlined
+              size="small"
+            />
+          </div>
         </div>
-        <div class="flex gap-2">
-          <button
-            @click="addSource"
-            class="flex-1 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
-            Add
-          </button>
-          <button
-            @click="cancelAdd"
-            class="flex-1 px-3 py-1 text-sm bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-slate-600"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+      </template>
+    </Card>
 
     <!-- Sources List -->
-    <div v-if="sources.length === 0 && !showAddForm" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+    <div v-if="sources.length === 0 && !showAddForm" class="empty-state">
       No sources added yet
     </div>
 
-    <div v-else class="space-y-2">
-      <div
+    <div v-else class="sources-list">
+      <Card
         v-for="source in sources"
         :key="source.name"
         @click="selectSource(source.name)"
-        class="p-3 bg-white dark:bg-slate-800 border-2 rounded-md transition-all cursor-pointer"
-        :class="selectedSource?.name === source.name 
-          ? 'border-blue-500 dark:border-blue-400 shadow-md' 
-          : 'border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500'"
+        :class="['source-card', { 'source-card-selected': selectedSource?.name === source.name }]"
       >
-        <div class="flex items-start justify-between">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{{ source.name }}</span>
-              <span class="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">{{ source.type }}</span>
-              <span 
-                v-if="selectedSource?.name === source.name"
-                class="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded"
-              >
-                Active
-              </span>
+        <template #content>
+          <div class="source-content">
+            <div class="source-info">
+              <div class="source-header">
+                <span class="source-name">{{ source.name }}</span>
+                <span class="badge badge-type">{{ source.type }}</span>
+                <span 
+                  v-if="selectedSource?.name === source.name"
+                  class="badge badge-active"
+                >
+                  Active
+                </span>
+              </div>
+              <p class="source-url">{{ source.url }}</p>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">{{ source.url }}</p>
+            <Button
+              @click.stop="requestRemoveSource(source)"
+              icon="pi pi-times"
+              text
+              rounded
+              severity="secondary"
+              size="small"
+              title="Remove source"
+            />
           </div>
-          <button
-            @click.stop="requestRemoveSource(source)"
-            class="ml-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
-            title="Remove source"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-      </div>
+        </template>
+      </Card>
     </div>
 
     <ConfirmModal
@@ -244,5 +247,125 @@ const cancelAdd = () => {
 </template>
 
 <style scoped>
-/* Component-specific styles */
+.source-manager {
+  padding: 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.add-form {
+  margin-bottom: 0.75rem;
+}
+
+.form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.input-field {
+  width: 100%;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.form-actions button {
+  flex: 1;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 1rem 0;
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+}
+
+.sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.source-card {
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid var(--border-primary);
+}
+
+.source-card:hover {
+  border-color: var(--accent-primary);
+}
+
+.source-card-selected {
+  border-color: var(--accent-primary);
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+}
+
+.source-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.source-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.source-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.source-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.source-url {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0.25rem 0 0 0;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+.badge-type {
+  background: var(--p-primary-100);
+  color: var(--p-primary-700);
+}
+
+.badge-active {
+  background: var(--p-green-100);
+  color: var(--p-green-700);
+}
 </style>
