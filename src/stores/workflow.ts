@@ -305,6 +305,9 @@ export const useWorkflowStore = defineStore('workflow', {
             if (step.parameters && step.parameters.length > 0) {
               cleanStep.parameters = step.parameters
             }
+            if (step.requestBody) {
+              cleanStep.requestBody = step.requestBody
+            }
             if (step.successCriteria && step.successCriteria.length > 0) {
               cleanStep.successCriteria = step.successCriteria
             }
@@ -313,6 +316,9 @@ export const useWorkflowStore = defineStore('workflow', {
             }
             if (step.onFailure && step.onFailure.length > 0) {
               cleanStep.onFailure = step.onFailure
+            }
+            if (step.outputs && Object.keys(step.outputs).length > 0) {
+              cleanStep.outputs = step.outputs
             }
             
             return cleanStep as ArazzoStep

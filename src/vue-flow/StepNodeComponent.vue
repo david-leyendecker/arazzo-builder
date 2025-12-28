@@ -1,69 +1,35 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { NodeToolbar } from '@vue-flow/node-toolbar'
 import { useWorkflowStore } from '../stores/workflow'
+import type { ArazzoStep } from '../types/arazzo'
 
 interface Props {
   id: string
   selected?: boolean
-  data: {
-    stepId: string
-    operationId: string
-  }
+  data: ArazzoStep
 }
 
 const props = defineProps<Props>()
 const workflowStore = useWorkflowStore()
 
-const addParameter = () => {
-  const timestamp = Date.now()
-  const id = `parameter-${timestamp}`
-  
-  // Find parent node position
-  const parentNode = workflowStore.nodes.find(n => n.id === props.id)
-  const parentPosition = parentNode?.position || { x: 100, y: 100 }
-  
-  // Calculate child position relative to parent (above)
-  const position = {
-    x: parentPosition.x + 250,
-    y: parentPosition.y - 100
-  }
-  
-  workflowStore.addNode({
-    id,
-    type: 'parameter',
-    data: {
-      name: '',
-      in: 'query',
-      value: ''
-    },
-    position
-  })
-}
+// Computed properties for inline display
+const parameters = computed(() => props.data.parameters || [])
+const outputs = computed(() => props.data.outputs ? Object.keys(props.data.outputs) : [])
+const successCriteria = computed(() => props.data.successCriteria || [])
 
-const addSuccessCriteria = () => {
-  const timestamp = Date.now()
-  const id = `criteria-${timestamp}`
-  
-  // Find parent node position
-  const parentNode = workflowStore.nodes.find(n => n.id === props.id)
-  const parentPosition = parentNode?.position || { x: 100, y: 100 }
-  
-  // Calculate child position relative to parent (below)
-  const position = {
-    x: parentPosition.x + 250,
-    y: parentPosition.y + 100
-  }
-  
-  workflowStore.addNode({
-    id,
-    type: 'criteria',
-    data: {
-      criteria: ''
-    },
-    position
-  })
-}
+// Constants for truncation
+const MAX_VISIBLE_ITEMS = 3
+
+const visibleParameters = computed(() => parameters.value.slice(0, MAX_VISIBLE_ITEMS))
+const hiddenParametersCount = computed(() => Math.max(0, parameters.value.length - MAX_VISIBLE_ITEMS))
+
+const visibleOutputs = computed(() => outputs.value.slice(0, MAX_VISIBLE_ITEMS))
+const hiddenOutputsCount = computed(() => Math.max(0, outputs.value.length - MAX_VISIBLE_ITEMS))
+
+const visibleCriteria = computed(() => successCriteria.value.slice(0, MAX_VISIBLE_ITEMS))
+const hiddenCriteriaCount = computed(() => Math.max(0, successCriteria.value.length - MAX_VISIBLE_ITEMS))
 
 const addNextStep = () => {
   const timestamp = Date.now()
@@ -95,22 +61,72 @@ const addNextStep = () => {
 </script>
 
 <template>
-  <div class="step-node bg-blue-500 text-white rounded-lg shadow-lg p-4 min-w-[180px]">
+  <div class="step-node bg-blue-500 text-white rounded-lg shadow-lg p-4 min-w-[220px] max-w-[320px]">
     <NodeToolbar :is-visible="selected" :position="Position.Top">
       <div class="toolbar-buttons">
-        <button @click="addParameter" class="toolbar-button" title="Add Parameter">
-          📝 Parameter
-        </button>
-        <button @click="addSuccessCriteria" class="toolbar-button" title="Add Success Criteria">
-          ✓ Criteria
-        </button>
         <button @click="addNextStep" class="toolbar-button" title="Add Next Step">
           ➕ Next Step
         </button>
       </div>
     </NodeToolbar>
+    
+    <!-- Step Header -->
     <div class="font-bold text-sm mb-1">{{ data.operationId || data.stepId }}</div>
-    <div class="text-xs opacity-80">{{ data.stepId }}</div>
+    <div class="text-xs opacity-80 mb-3">{{ data.stepId }}</div>
+    
+    <!-- Inline Parameters -->
+    <div v-if="parameters.length > 0" class="mb-3">
+      <div class="text-xs font-semibold mb-1 opacity-90">Parameters:</div>
+      <div class="space-y-1">
+        <div
+          v-for="param in visibleParameters"
+          :key="param.name"
+          class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-400 bg-opacity-60 mr-1 mb-1"
+        >
+          {{ param.name }} <span class="opacity-70 ml-1">({{ param.in || 'query' }})</span>
+        </div>
+        <div v-if="hiddenParametersCount > 0" class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-blue-400 bg-opacity-40 italic">
+          +{{ hiddenParametersCount }} more
+        </div>
+      </div>
+    </div>
+    
+    <!-- Inline Outputs -->
+    <div v-if="outputs.length > 0" class="mb-3">
+      <div class="text-xs font-semibold mb-1 opacity-90">Outputs:</div>
+      <div class="space-y-1">
+        <div
+          v-for="output in visibleOutputs"
+          :key="output"
+          class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-400 bg-opacity-60 mr-1 mb-1"
+        >
+          {{ output }}
+        </div>
+        <div v-if="hiddenOutputsCount > 0" class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-green-400 bg-opacity-40 italic">
+          +{{ hiddenOutputsCount }} more
+        </div>
+      </div>
+    </div>
+    
+    <!-- Inline Success Criteria -->
+    <div v-if="successCriteria.length > 0" class="mb-2">
+      <div class="text-xs font-semibold mb-1 opacity-90">Success Criteria:</div>
+      <div class="space-y-1">
+        <div
+          v-for="(criteria, index) in visibleCriteria"
+          :key="index"
+          class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-teal-400 bg-opacity-60 mr-1 mb-1 max-w-full truncate"
+          :title="criteria"
+        >
+          {{ criteria }}
+        </div>
+        <div v-if="hiddenCriteriaCount > 0" class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-teal-400 bg-opacity-40 italic">
+          +{{ hiddenCriteriaCount }} more
+        </div>
+      </div>
+    </div>
+    
+    <!-- Connection Handles -->
     <Handle type="target" :position="Position.Left" id="prev" class="!bg-blue-300" />
     <Handle type="source" :position="Position.Right" id="success" class="!bg-green-400" style="top: 40%" />
     <Handle type="source" :position="Position.Right" id="failure" class="!bg-red-400" style="top: 60%" />

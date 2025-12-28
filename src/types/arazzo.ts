@@ -30,9 +30,11 @@ export interface ArazzoStep {
   operationId: string;
   description?: string;
   parameters?: ArazzoParameter[];
+  requestBody?: Record<string, unknown>;
   successCriteria?: string[];
   onSuccess?: ArazzoCriterionTarget[];
   onFailure?: ArazzoCriterionTarget[];
+  outputs?: Record<string, unknown>;
 }
 
 /**
@@ -68,7 +70,7 @@ export interface ArazzoWorkflow {
 /**
  * Runtime types for the workflow builder
  */
-export type NodeType = 'start' | 'step' | 'end' | 'workflow' | 'parameter' | 'criteria';
+export type NodeType = 'start' | 'step' | 'end' | 'workflow';
 
 export interface WorkflowNode {
   id: string;
