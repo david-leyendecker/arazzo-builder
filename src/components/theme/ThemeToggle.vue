@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useThemeStore } from '../../stores/theme'
 import { computed } from 'vue'
+import MdFilledButton from 'vue-material-3/src/components/button/MdFilledButton.vue'
 
 const themeStore = useThemeStore()
 
@@ -28,20 +29,36 @@ const cycleTheme = () => {
 </script>
 
 <template>
-  <button
+  <MdFilledButton
     @click="cycleTheme"
-    class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors
-           bg-gray-100 hover:bg-gray-200 text-gray-700
-           dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-gray-200"
     :title="`Current theme: ${currentLabel}. Click to cycle through themes.`"
+    class="theme-toggle-btn"
   >
-    <span class="text-lg">{{ currentIcon }}</span>
-    <span class="hidden sm:inline">{{ currentLabel }}</span>
-  </button>
+    <span class="theme-icon">{{ currentIcon }}</span>
+    <span class="theme-label">{{ currentLabel }}</span>
+  </MdFilledButton>
 </template>
 
 <style scoped>
-button {
+.theme-toggle-btn {
   user-select: none;
+}
+
+.theme-icon {
+  font-size: 1.125rem;
+  margin-right: 0.5rem;
+}
+
+.theme-label {
+  font-size: 0.875rem;
+}
+
+@media (max-width: 640px) {
+  .theme-label {
+    display: none;
+  }
+  .theme-icon {
+    margin-right: 0;
+  }
 }
 </style>
