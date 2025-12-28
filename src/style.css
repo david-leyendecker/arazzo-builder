@@ -2,49 +2,98 @@
 @tailwind components;
 @tailwind utilities;
 
-/* CSS Custom Properties for Theming */
+/* Material Design 3 Color Tokens - Light Mode */
 :root {
   --color-scheme: light;
   
-  /* Background colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-tertiary: #f3f4f6;
+  /* Material 3 Primary Colors */
+  --md-sys-color-primary: #0061A4;
+  --md-sys-color-on-primary: #FFFFFF;
+  --md-sys-color-primary-container: #D1E4FF;
+  --md-sys-color-on-primary-container: #001D36;
   
-  /* Text colors */
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-tertiary: #6b7280;
+  /* Material 3 Secondary Colors */
+  --md-sys-color-secondary: #535E69;
+  --md-sys-color-on-secondary: #FFFFFF;
+  --md-sys-color-secondary-container: #D7E3F0;
+  --md-sys-color-on-secondary-container: #101C24;
   
-  /* Border colors */
-  --border-primary: #e5e7eb;
-  --border-secondary: #d1d5db;
+  /* Material 3 Tertiary Colors */
+  --md-sys-color-tertiary: #6B5778;
+  --md-sys-color-on-tertiary: #FFFFFF;
+  --md-sys-color-tertiary-container: #F3D9FF;
+  --md-sys-color-on-tertiary-container: #251432;
   
-  /* Accent colors */
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
+  /* Material 3 Error Colors */
+  --md-sys-color-error: #BA1A1A;
+  --md-sys-color-on-error: #FFFFFF;
+  --md-sys-color-error-container: #FFDAD6;
+  --md-sys-color-on-error-container: #410002;
+  
+  /* Material 3 Background Colors */
+  --md-sys-color-background: #FCFCFF;
+  --md-sys-color-on-background: #1A1C1E;
+  --md-sys-color-surface: #FCFCFF;
+  --md-sys-color-on-surface: #1A1C1E;
+  --md-sys-color-surface-variant: #DFE2EB;
+  --md-sys-color-on-surface-variant: #43474E;
+  
+  /* Material 3 Outline */
+  --md-sys-color-outline: #73777F;
+  --md-sys-color-outline-variant: #C3C7CF;
+  
+  /* Legacy custom properties for compatibility */
+  --bg-primary: var(--md-sys-color-surface);
+  --bg-secondary: var(--md-sys-color-surface-variant);
+  --text-primary: var(--md-sys-color-on-surface);
+  --accent-primary: var(--md-sys-color-primary);
 }
 
+/* Material Design 3 Color Tokens - Dark Mode */
 :root.dark {
   --color-scheme: dark;
   
-  /* Background colors */
-  --bg-primary: #1f2937;
-  --bg-secondary: #111827;
-  --bg-tertiary: #374151;
+  /* Material 3 Primary Colors - Dark */
+  --md-sys-color-primary: #9ECAFF;
+  --md-sys-color-on-primary: #003258;
+  --md-sys-color-primary-container: #00497D;
+  --md-sys-color-on-primary-container: #D1E4FF;
   
-  /* Text colors */
-  --text-primary: #f9fafb;
-  --text-secondary: #e5e7eb;
-  --text-tertiary: #d1d5db;
+  /* Material 3 Secondary Colors - Dark */
+  --md-sys-color-secondary: #BBC7D4;
+  --md-sys-color-on-secondary: #25303A;
+  --md-sys-color-secondary-container: #3C4651;
+  --md-sys-color-on-secondary-container: #D7E3F0;
   
-  /* Border colors */
-  --border-primary: #374151;
-  --border-secondary: #4b5563;
+  /* Material 3 Tertiary Colors - Dark */
+  --md-sys-color-tertiary: #D7BDE4;
+  --md-sys-color-on-tertiary: #3A2948;
+  --md-sys-color-tertiary-container: #52405F;
+  --md-sys-color-on-tertiary-container: #F3D9FF;
   
-  /* Accent colors */
-  --accent-primary: #60a5fa;
-  --accent-hover: #3b82f6;
+  /* Material 3 Error Colors - Dark */
+  --md-sys-color-error: #FFB4AB;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000A;
+  --md-sys-color-on-error-container: #FFDAD6;
+  
+  /* Material 3 Background Colors - Dark */
+  --md-sys-color-background: #1A1C1E;
+  --md-sys-color-on-background: #E2E2E6;
+  --md-sys-color-surface: #1A1C1E;
+  --md-sys-color-on-surface: #E2E2E6;
+  --md-sys-color-surface-variant: #43474E;
+  --md-sys-color-on-surface-variant: #C3C7CF;
+  
+  /* Material 3 Outline - Dark */
+  --md-sys-color-outline: #8D9199;
+  --md-sys-color-outline-variant: #43474E;
+  
+  /* Legacy custom properties for compatibility */
+  --bg-primary: var(--md-sys-color-surface);
+  --bg-secondary: var(--md-sys-color-surface-variant);
+  --text-primary: var(--md-sys-color-on-surface);
+  --accent-primary: var(--md-sys-color-primary);
 }
 
 /* Custom styles for Arazzo Builder */

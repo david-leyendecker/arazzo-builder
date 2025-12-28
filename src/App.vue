@@ -6,25 +6,25 @@ import ThemeToggle from './components/theme/ThemeToggle.vue'
 </script>
 
 <template>
-  <div class="flex h-screen w-screen bg-gray-50 dark:bg-slate-950">
+  <div class="app-container">
     <!-- Main Canvas Area -->
-    <div class="flex-1 relative">
+    <div class="canvas-area">
       <!-- Theme Toggle - positioned at top-right -->
-      <div class="absolute top-4 right-4 z-10">
+      <div class="theme-toggle-wrapper">
         <ThemeToggle />
       </div>
       <WorkflowCanvas />
     </div>
 
     <!-- Right Sidebar -->
-    <div class="w-80 bg-white dark:bg-slate-900 border-l border-gray-200 dark:border-slate-700 flex flex-col">
+    <div class="sidebar">
       <!-- Source Manager Section -->
-      <div class="border-b border-gray-200 dark:border-slate-700">
+      <div class="sidebar-section">
         <SourceManager />
       </div>
 
       <!-- Contextual Inspector Section -->
-      <div class="flex-1 overflow-auto">
+      <div class="sidebar-section inspector-section">
         <ContextualInspector />
       </div>
     </div>
@@ -32,5 +32,41 @@ import ThemeToggle from './components/theme/ThemeToggle.vue'
 </template>
 
 <style scoped>
-/* Component-specific styles if needed */
+.app-container {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background-color: var(--md-sys-color-background);
+}
+
+.canvas-area {
+  flex: 1;
+  position: relative;
+  background-color: var(--md-sys-color-surface);
+}
+
+.theme-toggle-wrapper {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  z-index: 10;
+}
+
+.sidebar {
+  width: 20rem;
+  background-color: var(--md-sys-color-surface);
+  border-left: 1px solid var(--md-sys-color-outline-variant);
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-section {
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+
+.inspector-section {
+  flex: 1;
+  overflow-y: auto;
+  border-bottom: none;
+}
 </style>

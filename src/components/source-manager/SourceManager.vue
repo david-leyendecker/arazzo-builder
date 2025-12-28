@@ -2,6 +2,12 @@
 import { ref, computed } from 'vue'
 import { useWorkflowStore } from '../../stores/workflow'
 import ConfirmModal from '../common/ConfirmModal.vue'
+import MdTextButton from 'vue-material-3/src/components/button/MdTextButton.vue'
+import MdFilledButton from 'vue-material-3/src/components/button/MdFilledButton.vue'
+import MdOutlinedTextField from 'vue-material-3/src/components/text-field/MdOutlinedTextField.vue'
+import MdCard from 'vue-material-3/src/components/card/MdCard.vue'
+import MdBadge from 'vue-material-3/src/components/badge/MdBadge.vue'
+import MdIconButton from 'vue-material-3/src/components/icon-button/MdIconButton.vue'
 
 const workflowStore = useWorkflowStore()
 
@@ -131,103 +137,85 @@ const cancelAdd = () => {
 </script>
 
 <template>
-  <div class="source-manager p-4">
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">OpenAPI Sources</h2>
-      <button
-        @click="showAddForm = true"
+  <div class="source-manager">
+    <div class="header">
+      <h2 class="title">OpenAPI Sources</h2>
+      <MdTextButton
         v-if="!showAddForm"
-        class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+        @click="showAddForm = true"
+        class="add-button"
       >
         + Add
-      </button>
+      </MdTextButton>
     </div>
 
     <!-- Add Source Form -->
-    <div v-if="showAddForm" class="mb-3 p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600">
-      <div class="space-y-2">
-        <div>
-          <input
-            v-model="newSource.name"
-            type="text"
-            placeholder="Source name"
-            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
-          />
-        </div>
-        <div>
-          <input
-            v-model="newSource.url"
-            type="text"
-            placeholder="URL or path"
-            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
-          />
-        </div>
-        <div>
-          <select
-            v-model="newSource.type"
-            class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
-          >
-            <option value="openapi">OpenAPI</option>
-            <option value="arazzo">Arazzo</option>
-          </select>
-        </div>
-        <div class="flex gap-2">
-          <button
-            @click="addSource"
-            class="flex-1 px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
-          >
+    <MdCard v-if="showAddForm" class="add-form-card">
+      <div class="form-content">
+        <MdOutlinedTextField
+          v-model="newSource.name"
+          label="Source name"
+          class="form-field"
+        />
+        <MdOutlinedTextField
+          v-model="newSource.url"
+          label="URL or path"
+          class="form-field"
+        />
+        <select
+          v-model="newSource.type"
+          class="type-select"
+        >
+          <option value="openapi">OpenAPI</option>
+          <option value="arazzo">Arazzo</option>
+        </select>
+        <div class="form-actions">
+          <MdFilledButton @click="addSource" class="flex-1">
             Add
-          </button>
-          <button
-            @click="cancelAdd"
-            class="flex-1 px-3 py-1 text-sm bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-300 dark:hover:bg-slate-600"
-          >
+          </MdFilledButton>
+          <MdTextButton @click="cancelAdd" class="flex-1">
             Cancel
-          </button>
+          </MdTextButton>
         </div>
       </div>
-    </div>
+    </MdCard>
 
     <!-- Sources List -->
-    <div v-if="sources.length === 0 && !showAddForm" class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+    <div v-if="sources.length === 0 && !showAddForm" class="empty-state">
       No sources added yet
     </div>
 
-    <div v-else class="space-y-2">
-      <div
+    <div v-else class="sources-list">
+      <MdCard
         v-for="source in sources"
         :key="source.name"
         @click="selectSource(source.name)"
-        class="p-3 bg-white dark:bg-slate-800 border-2 rounded-md transition-all cursor-pointer"
-        :class="selectedSource?.name === source.name 
-          ? 'border-blue-500 dark:border-blue-400 shadow-md' 
-          : 'border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500'"
+        class="source-card"
+        :class="{ 'source-card-selected': selectedSource?.name === source.name }"
       >
-        <div class="flex items-start justify-between">
-          <div class="flex-1 min-w-0">
-            <div class="flex items-center gap-2">
-              <span class="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{{ source.name }}</span>
-              <span class="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">{{ source.type }}</span>
-              <span 
+        <div class="source-content">
+          <div class="source-info">
+            <div class="source-header">
+              <span class="source-name">{{ source.name }}</span>
+              <MdBadge class="source-type-badge">{{ source.type }}</MdBadge>
+              <MdBadge 
                 v-if="selectedSource?.name === source.name"
-                class="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded"
+                class="active-badge"
               >
                 Active
-              </span>
+              </MdBadge>
             </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">{{ source.url }}</p>
+            <p class="source-url">{{ source.url }}</p>
           </div>
-          <button
+          <MdIconButton
             @click.stop="requestRemoveSource(source)"
-            class="ml-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+            class="delete-button"
             title="Remove source"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+            ✕
+          </MdIconButton>
         </div>
-      </div>
+      </MdCard>
     </div>
 
     <ConfirmModal
@@ -244,5 +232,156 @@ const cancelAdd = () => {
 </template>
 
 <style scoped>
-/* Component-specific styles */
+.source-manager {
+  padding: 1rem;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.add-button {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-primary);
+}
+
+.add-form-card {
+  margin-bottom: 0.75rem;
+  padding: 0.75rem;
+  background-color: var(--md-sys-color-surface-variant);
+}
+
+.form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.form-field {
+  width: 100%;
+}
+
+.type-select {
+  width: 100%;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  border: 1px solid var(--md-sys-color-outline);
+  border-radius: 0.25rem;
+  background-color: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+}
+
+.type-select:focus {
+  outline: 2px solid var(--md-sys-color-primary);
+  outline-offset: 2px;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+.empty-state {
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  text-align: center;
+  padding: 1rem 0;
+}
+
+.sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.source-card {
+  padding: 0.75rem;
+  background-color: var(--md-sys-color-surface);
+  border: 2px solid var(--md-sys-color-outline-variant);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.source-card:hover {
+  border-color: var(--md-sys-color-primary);
+}
+
+.source-card-selected {
+  border-color: var(--md-sys-color-primary);
+  background-color: var(--md-sys-color-primary-container);
+}
+
+.source-content {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.source-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.source-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.source-name {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-type-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  background-color: var(--md-sys-color-secondary-container);
+  color: var(--md-sys-color-on-secondary-container);
+  border-radius: 0.25rem;
+}
+
+.active-badge {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  background-color: var(--md-sys-color-tertiary-container);
+  color: var(--md-sys-color-on-tertiary-container);
+  border-radius: 0.25rem;
+}
+
+.source-url {
+  font-size: 0.75rem;
+  color: var(--md-sys-color-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-top: 0.25rem;
+}
+
+.delete-button {
+  margin-left: 0.5rem;
+  color: var(--md-sys-color-error);
+}
+
+.delete-button:hover {
+  background-color: var(--md-sys-color-error-container);
+}
 </style>

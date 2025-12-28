@@ -7,6 +7,7 @@ import { MiniMap } from '@vue-flow/minimap'
 import { useWorkflowStore } from '../../stores/workflow'
 import WorkflowNodeComponent from '../../vue-flow/WorkflowNodeComponent.vue'
 import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
+import MdFilledButton from 'vue-material-3/src/components/button/MdFilledButton.vue'
 
 // Import Vue Flow styles
 import '@vue-flow/core/dist/style.css'
@@ -142,24 +143,21 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 </script>
 
 <template>
-  <div class="workflow-canvas-wrapper h-full w-full relative">
+  <div class="workflow-canvas-wrapper">
     <!-- Header Bar -->
-    <div class="absolute top-0 left-0 right-0 z-10 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 px-4 py-3">
-      <div class="flex items-center justify-between">
-        <h1 class="text-xl font-semibold text-gray-800 dark:text-gray-100">Arazzo Workflow Builder</h1>
-        <div class="flex gap-2">
-          <button 
-            @click="handleExportYAML"
-            class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-          >
+    <div class="header-bar">
+      <div class="header-content">
+        <h1 class="app-title">Arazzo Workflow Builder</h1>
+        <div class="header-actions">
+          <MdFilledButton @click="handleExportYAML">
             Export YAML
-          </button>
+          </MdFilledButton>
         </div>
       </div>
     </div>
 
     <!-- Vue Flow Canvas -->
-    <div class="absolute top-16 left-0 right-0 bottom-0">
+    <div class="canvas-container">
       <VueFlow
         v-model:nodes="nodes"
         v-model:edges="edges"
@@ -179,9 +177,9 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
     </div>
 
     <!-- Help Text -->
-    <div class="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 dark:text-gray-300 z-10">
-      <p class="font-medium mb-1">Quick Tips:</p>
-      <ul class="space-y-1">
+    <div class="help-panel">
+      <p class="help-title">Quick Tips:</p>
+      <ul class="help-list">
         <li>• Add an OpenAPI source to auto-create the workflow node</li>
         <li>• Select nodes to see action toolbar</li>
         <li>• Click and drag to connect nodes</li>
@@ -192,11 +190,83 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 </template>
 
 <style scoped>
+.workflow-canvas-wrapper {
+  height: 100%;
+  width: 100%;
+  position: relative;
+}
+
+.header-bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  background-color: var(--md-sys-color-surface);
+  border-bottom: 1px solid var(--md-sys-color-outline-variant);
+  padding: 0.75rem 1rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.app-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--md-sys-color-on-surface);
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.canvas-container {
+  position: absolute;
+  top: 4rem;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
 .workflow-canvas {
   background-image: 
     linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
   background-size: 20px 20px;
+}
+
+.help-panel {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  background-color: var(--md-sys-color-surface);
+  border: 1px solid var(--md-sys-color-outline-variant);
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--md-sys-color-on-surface-variant);
+  z-index: 10;
+}
+
+.help-title {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: var(--md-sys-color-on-surface);
+}
+
+.help-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.help-list li {
+  margin: 0.25rem 0;
 }
 
 /* Dark mode styles for Vue Flow Controls - using darker slate colors */
