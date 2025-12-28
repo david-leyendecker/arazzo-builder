@@ -9,8 +9,6 @@ import WorkflowNodeComponent from '../../vue-flow/WorkflowNodeComponent.vue'
 import StartNodeComponent from '../../vue-flow/StartNodeComponent.vue'
 import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
 import EndNodeComponent from '../../vue-flow/EndNodeComponent.vue'
-import ParameterNodeComponent from '../../vue-flow/ParameterNodeComponent.vue'
-import SuccessCriteriaNodeComponent from '../../vue-flow/SuccessCriteriaNodeComponent.vue'
 
 // Import Vue Flow styles
 import '@vue-flow/core/dist/style.css'
@@ -28,9 +26,7 @@ const nodeTypes = markRaw({
   workflow: WorkflowNodeComponent,
   start: StartNodeComponent,
   step: StepNodeComponent,
-  end: EndNodeComponent,
-  parameter: ParameterNodeComponent,
-  criteria: SuccessCriteriaNodeComponent
+  end: EndNodeComponent
 } as any)
 
 // Use refs for nodes and edges instead of computed

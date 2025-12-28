@@ -11,8 +11,6 @@ const selectedStep = computed(() => workflowStore.selectedStep)
 const hasSelection = computed(() => selectedNode.value !== null)
 const isStepNode = computed(() => selectedNode.value?.type === 'step')
 const isWorkflowNode = computed(() => selectedNode.value?.type === 'workflow')
-const isParameterNode = computed(() => selectedNode.value?.type === 'parameter')
-const isCriteriaNode = computed(() => selectedNode.value?.type === 'criteria')
 const isStartOrEndNode = computed(() => selectedNode.value?.type === 'start' || selectedNode.value?.type === 'end')
 
 // OperationId suggestions
@@ -150,6 +148,101 @@ const updateParameter = (index: number, field: keyof ArazzoParameter, value: any
   }
 }
 
+// Success Criteria management
+const addSuccessCriteria = () => {
+  if (!selectedNode.value || !selectedStep.value) return
+  
+  const currentCriteria = selectedStep.value.successCriteria || []
+  
+  workflowStore.updateNode(selectedNode.value.id, {
+    successCriteria: [...currentCriteria, '']
+  })
+}
+
+const removeSuccessCriteria = (index: number) => {
+  if (!selectedNode.value || !selectedStep.value) return
+  
+  const currentCriteria = [...(selectedStep.value.successCriteria || [])]
+  currentCriteria.splice(index, 1)
+  
+  workflowStore.updateNode(selectedNode.value.id, {
+    successCriteria: currentCriteria
+  })
+}
+
+const updateSuccessCriteria = (index: number, value: string) => {
+  if (!selectedNode.value || !selectedStep.value) return
+  
+  const currentCriteria = [...(selectedStep.value.successCriteria || [])]
+  currentCriteria[index] = value
+  
+  workflowStore.updateNode(selectedNode.value.id, {
+    successCriteria: currentCriteria
+  })
+}
+
+// Outputs management
+const addOutput = () => {
+  if (!selectedNode.value || !selectedStep.value) return
+  
+  const currentOutputs = selectedStep.value.outputs || {}
+  const newKey = `output${Object.keys(currentOutputs).length + 1}`
+  
+  workflowStore.updateNode(selectedNode.value.id, {
+    outputs: { ...currentOutputs, [newKey]: '' }
+  })
+}
+
+const removeOutput = (key: string) => {
+  if (!selectedNode.value || !selectedStep.value) return
+  
+  const currentOutputs = { ...(selectedStep.value.outputs || {}) }
+  delete currentOutputs[key]
+  
+  workflowStore.updateNode(selectedNode.value.id, {
+    outputs: currentOutputs
+  })
+}
+
+const updateOutputKey = (oldKey: string, newKey: string) => {
+  if (!selectedNode.value || !selectedStep.value || oldKey === newKey) return
+  
+  const currentOutputs = { ...(selectedStep.value.outputs || {}) }
+  const value = currentOutputs[oldKey]
+  delete currentOutputs[oldKey]
+  currentOutputs[newKey] = value
+  
+  workflowStore.updateNode(selectedNode.value.id, {
+    outputs: currentOutputs
+  })
+}
+
+const updateOutputValue = (key: string, value: any) => {
+  if (!selectedNode.value || !selectedStep.value) return
+  
+  const currentOutputs = { ...(selectedStep.value.outputs || {}) }
+  currentOutputs[key] = value
+  
+  workflowStore.updateNode(selectedNode.value.id, {
+    outputs: currentOutputs
+  })
+}
+
+// RequestBody management
+const updateRequestBody = (value: string) => {
+  if (!selectedNode.value) return
+  
+  try {
+    const parsed = value ? JSON.parse(value) : undefined
+    workflowStore.updateNode(selectedNode.value.id, {
+      requestBody: parsed
+    })
+  } catch (e) {
+    // Keep invalid JSON in a local state for editing
+    console.warn('Invalid JSON for requestBody')
+  }
+}
+
 const hasOpenAPISpecs = computed(() => workflowStore.parsedSpecs.length > 0)
 const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
 
@@ -210,52 +303,6 @@ const handleBlur = () => {
         <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
           {{ selectedNode.type === 'start' ? 'Marks the beginning of workflow execution.' : 'Marks the end of workflow execution.' }}
         </p>
-      </div>
-
-      <!-- Parameter Node -->
-      <div v-else-if="isParameterNode && selectedNode">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Parameter Name</label>
-          <input
-            type="text"
-            :value="(selectedNode.data as { name: string }).name"
-            readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 mt-3">Location</label>
-          <input
-            type="text"
-            :value="(selectedNode.data as { in: string }).in"
-            readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
-          />
-        </div>
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 mt-3">Value</label>
-          <input
-            type="text"
-            :value="(selectedNode.data as { value: string }).value"
-            readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
-          />
-        </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Parameter node for step configuration.</p>
-      </div>
-
-      <!-- Criteria Node -->
-      <div v-else-if="isCriteriaNode && selectedNode">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Criteria Expression</label>
-          <input
-            type="text"
-            :value="(selectedNode.data as { criteria: string }).criteria"
-            readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
-          />
-        </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Success validation criteria for the step.</p>
       </div>
 
       <!-- Step Node (original content) -->
@@ -401,11 +448,142 @@ const handleBlur = () => {
       <div>
         <div class="flex items-center justify-between mb-2">
           <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Success Criteria</label>
-          <button class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300">+ Add</button>
+          <button 
+            @click="addSuccessCriteria"
+            class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+          >
+            + Add
+          </button>
         </div>
-        <div class="text-sm text-gray-500 dark:text-gray-400 italic">
+        
+        <div v-if="!selectedStep?.successCriteria || selectedStep.successCriteria.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
           No criteria defined
         </div>
+        
+        <div v-else class="space-y-2">
+          <div
+            v-for="(criteria, index) in selectedStep.successCriteria"
+            :key="index"
+            class="flex items-start gap-2"
+          >
+            <input
+              type="text"
+              :value="criteria"
+              @input="(e) => updateSuccessCriteria(index, (e.target as HTMLInputElement).value)"
+              placeholder="e.g., $statusCode == 200"
+              class="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+            />
+            <button
+              @click="removeSuccessCriteria(index)"
+              class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+              title="Remove criteria"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Outputs Section -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Outputs</label>
+          <button 
+            @click="addOutput"
+            class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+          >
+            + Add
+          </button>
+        </div>
+        
+        <div v-if="!selectedStep?.outputs || Object.keys(selectedStep.outputs).length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
+          No outputs defined
+        </div>
+        
+        <div v-else class="space-y-3">
+          <div
+            v-for="(value, key) in selectedStep.outputs"
+            :key="key"
+            class="p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600"
+          >
+            <div class="flex items-start justify-between mb-2">
+              <input
+                type="text"
+                :value="key"
+                @blur="(e) => updateOutputKey(key as string, (e.target as HTMLInputElement).value)"
+                placeholder="Output name"
+                class="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+              />
+              <button
+                @click="removeOutput(key as string)"
+                class="ml-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+                title="Remove output"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <input
+              type="text"
+              :value="value"
+              @input="(e) => updateOutputValue(key as string, (e.target as HTMLInputElement).value)"
+              placeholder="e.g., $response.body.userId"
+              class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Request Body Section -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Request Body (JSON)</label>
+        <textarea
+          :value="selectedStep?.requestBody ? JSON.stringify(selectedStep.requestBody, null, 2) : ''"
+          @blur="(e) => updateRequestBody((e.target as HTMLTextAreaElement).value)"
+          rows="4"
+          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 font-mono text-xs"
+          placeholder='{ "key": "value" }'
+        ></textarea>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter valid JSON for the request body</p>
+      </div>
+
+      <!-- OnSuccess (Read-only) -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">On Success</label>
+        <div v-if="!selectedStep?.onSuccess || selectedStep.onSuccess.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
+          No success actions defined (connect nodes to define)
+        </div>
+        <div v-else class="space-y-1">
+          <div
+            v-for="(target, index) in selectedStep.onSuccess"
+            :key="index"
+            class="px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-sm text-gray-800 dark:text-gray-200"
+          >
+            {{ target.type === 'end' ? 'End workflow' : `Go to step: ${target.stepId}` }}
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Connect the green handle to define success flow</p>
+      </div>
+
+      <!-- OnFailure (Read-only) -->
+      <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">On Failure</label>
+        <div v-if="!selectedStep?.onFailure || selectedStep.onFailure.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
+          No failure actions defined (connect nodes to define)
+        </div>
+        <div v-else class="space-y-1">
+          <div
+            v-for="(target, index) in selectedStep.onFailure"
+            :key="index"
+            class="px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-gray-800 dark:text-gray-200"
+          >
+            {{ target.type === 'end' ? 'End workflow' : `Go to step: ${target.stepId}` }}
+          </div>
+        </div>
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Connect the red handle to define failure flow</p>
       </div>
       </div>
       <!-- End of Step Node section -->
