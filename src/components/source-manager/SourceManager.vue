@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useWorkflowStore } from '../../stores/workflow'
+import ConfirmModal from '../common/ConfirmModal.vue'
 
 const workflowStore = useWorkflowStore()
 
@@ -10,6 +11,13 @@ const newSource = ref({
   name: '',
   url: '',
   type: 'openapi' as 'openapi' | 'arazzo'
+})
+
+const confirmOpen = ref(false)
+const pendingRemoval = ref<(typeof sources.value)[number] | null>(null)
+const confirmMessage = computed(() => {
+  if (!pendingRemoval.value) return ''
+  return `Delete OpenAPI source "${pendingRemoval.value.name}"? This action cannot be undone.`
 })
 
 const addSource = () => {
@@ -26,6 +34,28 @@ const addSource = () => {
 
 const removeSource = (name: string) => {
   workflowStore.removeSourceDescription(name)
+}
+
+const requestRemoveSource = (source: (typeof sources.value)[number]) => {
+  if (source.type === 'openapi') {
+    pendingRemoval.value = source
+    confirmOpen.value = true
+    return
+  }
+
+  removeSource(source.name)
+}
+
+const confirmRemoval = () => {
+  if (!pendingRemoval.value) return
+
+  removeSource(pendingRemoval.value.name)
+  pendingRemoval.value = null
+}
+
+const cancelRemoval = () => {
+  pendingRemoval.value = null
+  confirmOpen.value = false
 }
 
 const cancelAdd = () => {
@@ -112,7 +142,7 @@ const cancelAdd = () => {
             <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">{{ source.url }}</p>
           </div>
           <button
-            @click="removeSource(source.name)"
+            @click="requestRemoveSource(source)"
             class="ml-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
             title="Remove source"
           >
@@ -123,6 +153,17 @@ const cancelAdd = () => {
         </div>
       </div>
     </div>
+
+    <ConfirmModal
+      v-model:open="confirmOpen"
+      title="Remove OpenAPI source?"
+      :message="confirmMessage"
+      confirmText="Delete"
+      cancelText="Cancel"
+      :destructive="true"
+      @confirm="confirmRemoval"
+      @cancel="cancelRemoval"
+    />
   </div>
 </template>
 
