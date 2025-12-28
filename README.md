@@ -11,7 +11,7 @@ Arazzo Builder is a web application for visually creating and editing OpenAPI Ar
 - **Framework**: Vue.js 3 (Composition API with `<script setup>`)
 - **Language**: TypeScript (Strict Mode)
 - **Node Flow Engine**: Vue Flow v1.48.1
-- **Styling**: Tailwind CSS
+- **UI Components**: PrimeVue 4.5.4
 - **State Management**: Pinia
 - **Build Tool**: Vite
 

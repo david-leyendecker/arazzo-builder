@@ -3,6 +3,12 @@ import { ref, computed, watch } from 'vue'
 import { useWorkflowStore } from '../../stores/workflow'
 import { filterOperations } from '../../services/openapi-service'
 import type { ArazzoParameter } from '../../types/arazzo'
+import InputText from 'primevue/inputtext'
+import Textarea from 'primevue/textarea'
+import Button from 'primevue/button'
+import Select from 'primevue/select'
+import Badge from 'primevue/badge'
+import Message from 'primevue/message'
 
 const workflowStore = useWorkflowStore()
 
@@ -246,6 +252,15 @@ const updateRequestBody = (value: string) => {
 const hasOpenAPISpecs = computed(() => workflowStore.parsedSpecs.length > 0)
 const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
 
+// Select options for parameter "in" field
+const parameterInOptions = [
+  { label: 'Path', value: 'path' },
+  { label: 'Query', value: 'query' },
+  { label: 'Header', value: 'header' },
+  { label: 'Cookie', value: 'cookie' },
+  { label: 'Body', value: 'body' }
+]
+
 // Delay for blur event to allow click on suggestion dropdown
 const SUGGESTION_DROPDOWN_DELAY_MS = 200
 
@@ -255,335 +270,341 @@ const handleBlur = () => {
 </script>
 
 <template>
-  <div class="contextual-inspector p-4">
-    <h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200 mb-4">Inspector</h2>
+  <div class="contextual-inspector">
+    <h2 class="inspector-title">Inspector</h2>
 
     <!-- No Selection State -->
-    <div v-if="!hasSelection" class="text-center py-8 text-gray-500 dark:text-gray-400">
-      <svg class="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-      <p class="text-sm">Select a node to view details</p>
+    <div v-if="!hasSelection" class="empty-state">
+      <i class="pi pi-info-circle empty-icon"></i>
+      <p class="empty-text">Select a node to view details</p>
     </div>
 
     <!-- Node Details -->
-    <div v-else class="space-y-4">
+    <div v-else class="inspector-content">
       <!-- Node Type Badge -->
-      <div v-if="selectedNode" class="mb-3">
-        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300">
-          {{ selectedNode.type }}
-        </span>
+      <div v-if="selectedNode" class="node-badge-wrapper">
+        <Badge :value="selectedNode.type" severity="info" />
       </div>
 
       <!-- Workflow Node -->
-      <div v-if="isWorkflowNode && selectedNode">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Workflow ID</label>
-          <input
-            type="text"
+      <div v-if="isWorkflowNode && selectedNode" class="field-group">
+        <div class="field">
+          <label class="field-label">Workflow ID</label>
+          <InputText
             :value="(selectedNode.data as { workflowId: string }).workflowId"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
+            class="field-input"
           />
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">Right-click this node to add steps to your workflow.</p>
+        <Message severity="info" :closable="false" class="info-message">
+          Right-click this node to add steps to your workflow.
+        </Message>
       </div>
 
       <!-- Start/End Node -->
-      <div v-else-if="isStartOrEndNode && selectedNode">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Node ID</label>
-          <input
-            type="text"
+      <div v-else-if="isStartOrEndNode && selectedNode" class="field-group">
+        <div class="field">
+          <label class="field-label">Node ID</label>
+          <InputText
             :value="selectedNode.id"
             readonly
-            class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
+            class="field-input"
           />
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+        <Message severity="info" :closable="false" class="info-message">
           {{ selectedNode.type === 'start' ? 'Marks the beginning of workflow execution.' : 'Marks the end of workflow execution.' }}
-        </p>
+        </Message>
       </div>
 
       <!-- Step Node (original content) -->
-      <div v-else-if="isStepNode">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Step ID</label>
-        <input
-          type="text"
+      <div v-else-if="isStepNode" class="field-group">
+      <div class="field">
+        <label class="field-label">Step ID</label>
+        <InputText
           :value="selectedStep?.stepId"
           readonly
-          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-gray-50 dark:bg-slate-800 text-gray-600 dark:text-gray-300"
+          class="field-input"
         />
       </div>
 
-      <div class="relative">
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+      <div class="field operation-field">
+        <label class="field-label">
           Operation ID
-          <span v-if="isLoadingSpecs" class="text-xs text-gray-500 dark:text-gray-400 ml-2">(Loading specs...)</span>
+          <span v-if="isLoadingSpecs" class="loading-text">(Loading specs...)</span>
         </label>
-        <input
-          type="text"
+        <InputText
           :value="operationIdInput"
           @input="handleOperationIdInput"
           @focus="showSuggestions = operationIdInput.length > 0 && filteredOperations.length > 0"
           @blur="handleBlur"
-          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100"
-          :class="{ 'border-red-500 dark:border-red-500': operationIdValidation && !operationIdValidation.valid }"
+          :invalid="operationIdValidation && !operationIdValidation.valid"
           placeholder="e.g., getUserById"
+          class="field-input"
         />
         
         <!-- Validation feedback -->
-        <div v-if="operationIdValidation && !operationIdValidation.valid" class="mt-1 text-xs text-red-600 dark:text-red-400">
+        <Message 
+          v-if="operationIdValidation && !operationIdValidation.valid" 
+          severity="error" 
+          :closable="false"
+          class="validation-message"
+        >
           {{ operationIdValidation.error }}
-        </div>
-        <div v-if="operationIdValidation && operationIdValidation.valid" class="mt-1 text-xs text-green-600 dark:text-green-400">
-          ✓ Valid operation
-        </div>
+        </Message>
+        <Message 
+          v-if="operationIdValidation && operationIdValidation.valid" 
+          severity="success" 
+          :closable="false"
+          class="validation-message"
+        >
+          Valid operation
+        </Message>
         
         <!-- Suggestions dropdown -->
         <div 
           v-if="showSuggestions && hasOpenAPISpecs" 
-          class="absolute z-10 w-full mt-1 bg-white dark:bg-slate-800 border border-gray-300 dark:border-slate-600 rounded-md shadow-lg max-h-60 overflow-auto"
+          class="suggestions-dropdown"
         >
           <div
             v-for="operation in filteredOperations.slice(0, 10)"
             :key="operation.operationId"
             @click="selectOperation(operation.operationId)"
-            class="px-3 py-2 hover:bg-blue-50 dark:hover:bg-gray-600 cursor-pointer border-b border-gray-100 dark:border-slate-600 last:border-0"
+            class="suggestion-item"
           >
-            <div class="font-medium text-sm text-gray-800 dark:text-gray-200">{{ operation.operationId }}</div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">
-              <span class="font-semibold">{{ operation.method }}</span> {{ operation.path }}
+            <div class="suggestion-title">{{ operation.operationId }}</div>
+            <div class="suggestion-method">
+              <span class="method-name">{{ operation.method }}</span> {{ operation.path }}
             </div>
-            <div v-if="operation.summary" class="text-xs text-gray-600 dark:text-gray-300 mt-1">{{ operation.summary }}</div>
+            <div v-if="operation.summary" class="suggestion-summary">{{ operation.summary }}</div>
           </div>
-          <div v-if="filteredOperations.length === 0" class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 italic">
+          <div v-if="filteredOperations.length === 0" class="suggestion-empty">
             No matching operations found
           </div>
         </div>
         
         <!-- No specs warning -->
-        <div v-if="!hasOpenAPISpecs && !isLoadingSpecs" class="mt-1 text-xs text-amber-600 dark:text-amber-400">
+        <Message 
+          v-if="!hasOpenAPISpecs && !isLoadingSpecs" 
+          severity="warn" 
+          :closable="false"
+          class="validation-message"
+        >
           💡 Add an OpenAPI source to get operation suggestions
-        </div>
+        </Message>
       </div>
 
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-        <textarea
+      <div class="field">
+        <label class="field-label">Description</label>
+        <Textarea
           :value="selectedStep?.description || ''"
           @input="updateDescription"
           rows="3"
-          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100"
           placeholder="Describe this step..."
-        ></textarea>
+          class="field-input"
+        />
       </div>
 
       <!-- Parameters Section -->
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Parameters</label>
-          <button 
+      <div class="section">
+        <div class="section-header">
+          <label class="section-label">Parameters</label>
+          <Button 
             @click="addParameter"
-            class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-          >
-            + Add
-          </button>
+            label="Add"
+            icon="pi pi-plus"
+            text
+            size="small"
+          />
         </div>
         
-        <div v-if="!selectedStep?.parameters || selectedStep.parameters.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
+        <div v-if="!selectedStep?.parameters || selectedStep.parameters.length === 0" class="empty-text">
           No parameters defined
         </div>
         
-        <div v-else class="space-y-3">
+        <div v-else class="items-list">
           <div
             v-for="(param, index) in selectedStep.parameters"
             :key="index"
-            class="p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600"
+            class="parameter-item"
           >
-            <div class="flex items-start justify-between mb-2">
-              <div class="flex-1 grid grid-cols-2 gap-2">
-                <input
-                  type="text"
+            <div class="parameter-row">
+              <div class="parameter-inputs">
+                <InputText
                   :value="param.name"
                   @input="(e) => updateParameter(index, 'name', (e.target as HTMLInputElement).value)"
                   placeholder="Parameter name"
-                  class="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+                  size="small"
                 />
-                <select
-                  :value="param.in"
-                  @change="(e) => updateParameter(index, 'in', (e.target as HTMLSelectElement).value)"
-                  class="px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
-                >
-                  <option value="path">Path</option>
-                  <option value="query">Query</option>
-                  <option value="header">Header</option>
-                  <option value="cookie">Cookie</option>
-                  <option value="body">Body</option>
-                </select>
+                <Select
+                  :modelValue="param.in"
+                  @update:modelValue="(value) => updateParameter(index, 'in', value)"
+                  :options="parameterInOptions"
+                  optionLabel="label"
+                  optionValue="value"
+                  size="small"
+                />
               </div>
-              <button
+              <Button
                 @click="removeParameter(index)"
-                class="ml-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+                icon="pi pi-times"
+                text
+                rounded
+                severity="danger"
+                size="small"
                 title="Remove parameter"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              />
             </div>
-            <input
-              type="text"
+            <InputText
               :value="param.value"
               @input="(e) => updateParameter(index, 'value', (e.target as HTMLInputElement).value)"
               placeholder="Value (e.g., $inputs.userId, literal value)"
-              class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+              size="small"
             />
           </div>
         </div>
       </div>
 
       <!-- Success Criteria -->
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Success Criteria</label>
-          <button 
+      <div class="section">
+        <div class="section-header">
+          <label class="section-label">Success Criteria</label>
+          <Button 
             @click="addSuccessCriteria"
-            class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-          >
-            + Add
-          </button>
+            label="Add"
+            icon="pi pi-plus"
+            text
+            size="small"
+          />
         </div>
         
-        <div v-if="!selectedStep?.successCriteria || selectedStep.successCriteria.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
+        <div v-if="!selectedStep?.successCriteria || selectedStep.successCriteria.length === 0" class="empty-text">
           No criteria defined
         </div>
         
-        <div v-else class="space-y-2">
+        <div v-else class="items-list">
           <div
             v-for="(criteria, index) in selectedStep.successCriteria"
             :key="index"
-            class="flex items-start gap-2"
+            class="criteria-item"
           >
-            <input
-              type="text"
+            <InputText
               :value="criteria"
               @input="(e) => updateSuccessCriteria(index, (e.target as HTMLInputElement).value)"
               placeholder="e.g., $statusCode == 200"
-              class="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+              size="small"
+              class="flex-1-input"
             />
-            <button
+            <Button
               @click="removeSuccessCriteria(index)"
-              class="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+              icon="pi pi-times"
+              text
+              rounded
+              severity="danger"
+              size="small"
               title="Remove criteria"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            />
           </div>
         </div>
       </div>
 
       <!-- Outputs Section -->
-      <div>
-        <div class="flex items-center justify-between mb-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Outputs</label>
-          <button 
+      <div class="section">
+        <div class="section-header">
+          <label class="section-label">Outputs</label>
+          <Button 
             @click="addOutput"
-            class="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-          >
-            + Add
-          </button>
+            label="Add"
+            icon="pi pi-plus"
+            text
+            size="small"
+          />
         </div>
         
-        <div v-if="!selectedStep?.outputs || Object.keys(selectedStep.outputs).length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
+        <div v-if="!selectedStep?.outputs || Object.keys(selectedStep.outputs).length === 0" class="empty-text">
           No outputs defined
         </div>
         
-        <div v-else class="space-y-3">
+        <div v-else class="items-list">
           <div
             v-for="(value, key) in selectedStep.outputs"
             :key="key"
-            class="p-3 bg-gray-50 dark:bg-slate-800 rounded-md border border-gray-200 dark:border-slate-600"
+            class="output-item"
           >
-            <div class="flex items-start justify-between mb-2">
-              <input
-                type="text"
+            <div class="output-row">
+              <InputText
                 :value="key"
                 @blur="(e) => updateOutputKey(key as string, (e.target as HTMLInputElement).value)"
                 placeholder="Output name"
-                class="flex-1 px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+                size="small"
+                class="flex-1-input"
               />
-              <button
+              <Button
                 @click="removeOutput(key as string)"
-                class="ml-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
+                icon="pi pi-times"
+                text
+                rounded
+                severity="danger"
+                size="small"
                 title="Remove output"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              />
             </div>
-            <input
-              type="text"
+            <InputText
               :value="value"
               @input="(e) => updateOutputValue(key as string, (e.target as HTMLInputElement).value)"
               placeholder="e.g., $response.body.userId"
-              class="w-full px-2 py-1 text-sm border border-gray-300 dark:border-slate-600 rounded focus:ring-1 focus:ring-blue-500 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100"
+              size="small"
             />
           </div>
         </div>
       </div>
 
       <!-- Request Body Section -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Request Body (JSON)</label>
-        <textarea
+      <div class="field">
+        <label class="field-label">Request Body (JSON)</label>
+        <Textarea
           :value="selectedStep?.requestBody ? JSON.stringify(selectedStep.requestBody, null, 2) : ''"
           @blur="(e) => updateRequestBody((e.target as HTMLTextAreaElement).value)"
           rows="4"
-          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 font-mono text-xs"
           placeholder='{ "key": "value" }'
-        ></textarea>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter valid JSON for the request body</p>
+          class="code-textarea"
+        />
+        <p class="help-text">Enter valid JSON for the request body</p>
       </div>
 
       <!-- OnSuccess (Read-only) -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">On Success</label>
-        <div v-if="!selectedStep?.onSuccess || selectedStep.onSuccess.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
+      <div class="field">
+        <label class="field-label">On Success</label>
+        <div v-if="!selectedStep?.onSuccess || selectedStep.onSuccess.length === 0" class="empty-text">
           No success actions defined (connect nodes to define)
         </div>
-        <div v-else class="space-y-1">
+        <div v-else class="flow-items">
           <div
             v-for="(target, index) in selectedStep.onSuccess"
             :key="index"
-            class="px-3 py-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded text-sm text-gray-800 dark:text-gray-200"
+            class="flow-item success-flow"
           >
             {{ target.type === 'end' ? 'End workflow' : `Go to step: ${target.stepId}` }}
           </div>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Connect the green handle to define success flow</p>
+        <p class="help-text">Connect the green handle to define success flow</p>
       </div>
 
       <!-- OnFailure (Read-only) -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">On Failure</label>
-        <div v-if="!selectedStep?.onFailure || selectedStep.onFailure.length === 0" class="text-sm text-gray-500 dark:text-gray-400 italic">
+      <div class="field">
+        <label class="field-label">On Failure</label>
+        <div v-if="!selectedStep?.onFailure || selectedStep.onFailure.length === 0" class="empty-text">
           No failure actions defined (connect nodes to define)
         </div>
-        <div v-else class="space-y-1">
+        <div v-else class="flow-items">
           <div
             v-for="(target, index) in selectedStep.onFailure"
             :key="index"
-            class="px-3 py-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded text-sm text-gray-800 dark:text-gray-200"
+            class="flow-item failure-flow"
           >
             {{ target.type === 'end' ? 'End workflow' : `Go to step: ${target.stepId}` }}
           </div>
         </div>
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Connect the red handle to define failure flow</p>
+        <p class="help-text">Connect the red handle to define failure flow</p>
       </div>
       </div>
       <!-- End of Step Node section -->
@@ -592,5 +613,218 @@ const handleBlur = () => {
 </template>
 
 <style scoped>
-/* Component-specific styles */
+.contextual-inspector {
+  padding: 1rem;
+}
+
+.inspector-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem 0;
+  color: var(--text-tertiary);
+}
+
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.empty-text {
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+  margin: 0;
+}
+
+.inspector-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.node-badge-wrapper {
+  margin-bottom: 0.5rem;
+}
+
+.field-group,
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.field-label,
+.section-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.field-input {
+  width: 100%;
+}
+
+.info-message,
+.validation-message {
+  font-size: 0.75rem;
+}
+
+.help-text {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin: 0.25rem 0 0 0;
+}
+
+.loading-text {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+  margin-left: 0.5rem;
+}
+
+.operation-field {
+  position: relative;
+}
+
+.suggestions-dropdown {
+  position: absolute;
+  z-index: 10;
+  width: 100%;
+  margin-top: 0.25rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-primary);
+  border-radius: 0.375rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+  max-height: 15rem;
+  overflow: auto;
+}
+
+.suggestion-item {
+  padding: 0.5rem 0.75rem;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+.suggestion-item:hover {
+  background: var(--bg-tertiary);
+}
+
+.suggestion-title {
+  font-weight: 500;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.suggestion-method {
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.method-name {
+  font-weight: 600;
+}
+
+.suggestion-summary {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
+
+.suggestion-empty {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.items-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.parameter-item,
+.output-item {
+  padding: 0.75rem;
+  background: var(--bg-secondary);
+  border-radius: 0.375rem;
+  border: 1px solid var(--border-primary);
+}
+
+.parameter-row,
+.output-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.parameter-inputs {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.criteria-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.flex-1-input {
+  flex: 1;
+}
+
+.code-textarea {
+  font-family: monospace;
+  font-size: 0.75rem;
+  width: 100%;
+}
+
+.flow-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.flow-item {
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.success-flow {
+  background: var(--p-green-50);
+  border: 1px solid var(--p-green-200);
+}
+
+.failure-flow {
+  background: var(--p-red-50);
+  border: 1px solid var(--p-red-200);
+}
 </style>
