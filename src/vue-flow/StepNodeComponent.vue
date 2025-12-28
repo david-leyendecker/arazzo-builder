@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { NodeToolbar } from '@vue-flow/node-toolbar'
 import { useWorkflowStore } from '../stores/workflow'
 import type { ArazzoStep } from '../types/arazzo'
+import ConfirmModal from '../components/common/ConfirmModal.vue'
 
 interface Props {
   id: string
@@ -30,6 +31,8 @@ const hiddenOutputsCount = computed(() => Math.max(0, outputs.value.length - MAX
 
 const visibleCriteria = computed(() => successCriteria.value.slice(0, MAX_VISIBLE_ITEMS))
 const hiddenCriteriaCount = computed(() => Math.max(0, successCriteria.value.length - MAX_VISIBLE_ITEMS))
+
+const showDeleteConfirm = ref(false)
 
 const addNextStep = () => {
   const timestamp = Date.now()
@@ -69,8 +72,10 @@ const addNextStep = () => {
 }
 
 const deleteStep = () => {
-  const confirmed = window.confirm('Delete this step and reconnect the flow?')
-  if (!confirmed) return
+  showDeleteConfirm.value = true
+}
+
+const confirmDeletion = () => {
   workflowStore.removeStepWithReconnect(props.id)
 }
 </script>
@@ -149,6 +154,16 @@ const deleteStep = () => {
     <Handle type="source" :position="Position.Right" id="success" class="!bg-green-400" style="top: 40%" />
     <Handle type="source" :position="Position.Right" id="failure" class="!bg-red-400" style="top: 60%" />
   </div>
+
+  <ConfirmModal
+    v-model:open="showDeleteConfirm"
+    title="Delete step?"
+    message="This will remove the step and reconnect surrounding steps."
+    confirm-text="Delete"
+    cancel-text="Cancel"
+    :destructive="true"
+    @confirm="confirmDeletion"
+  />
 </template>
 
 <style scoped>
