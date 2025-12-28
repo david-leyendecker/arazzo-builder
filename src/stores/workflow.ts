@@ -55,6 +55,11 @@ export const useWorkflowStore = defineStore('workflow', {
 
     sourceDescriptions: (state) => state.workflow.sourceDescriptions,
 
+    selectedSource: (state) => {
+      if (!state.selectedSourceId) return null
+      return state.workflow.sourceDescriptions.find(s => s.name === state.selectedSourceId) || null
+    },
+
     allOperations: (state) => {
       return state.parsedSpecs.flatMap(spec => spec.operations)
     },
@@ -74,6 +79,11 @@ export const useWorkflowStore = defineStore('workflow', {
     addSourceDescription(source: ArazzoSourceDescription) {
       this.workflow.sourceDescriptions.push(source)
       
+      // Auto-select the first source
+      if (this.workflow.sourceDescriptions.length === 1) {
+        this.selectedSourceId = source.name
+      }
+      
       // Automatically fetch and parse the spec if it's an OpenAPI source
       if (source.type === 'openapi' && source.url) {
         this.loadOpenAPISpec(source.name, source.url)
@@ -84,6 +94,11 @@ export const useWorkflowStore = defineStore('workflow', {
       const index = this.workflow.sourceDescriptions.findIndex(s => s.name === name)
       if (index !== -1) {
         this.workflow.sourceDescriptions.splice(index, 1)
+      }
+      
+      // If removing the selected source, clear selection
+      if (this.selectedSourceId === name) {
+        this.selectedSourceId = null
       }
       
       // Remove the parsed spec
@@ -264,6 +279,25 @@ export const useWorkflowStore = defineStore('workflow', {
 
     selectSource(sourceId: string | null) {
       this.selectedSourceId = sourceId
+    },
+
+    /**
+     * Check if there is any workflow data (nodes or steps)
+     */
+    hasWorkflowData(): boolean {
+      return this.nodes.length > 0 || (this.workflow.workflows[0]?.steps.length || 0) > 0
+    },
+
+    /**
+     * Clear all workflow data (nodes, connections, and steps)
+     */
+    clearWorkflowData() {
+      this.nodes = []
+      this.connections = []
+      this.selectedNodeId = null
+      if (this.workflow.workflows[0]) {
+        this.workflow.workflows[0].steps = []
+      }
     },
 
     /**

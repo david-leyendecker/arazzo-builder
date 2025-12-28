@@ -6,6 +6,7 @@ import ConfirmModal from '../common/ConfirmModal.vue'
 const workflowStore = useWorkflowStore()
 
 const sources = computed(() => workflowStore.sourceDescriptions)
+const selectedSource = computed(() => workflowStore.selectedSource)
 const showAddForm = ref(false)
 const newSource = ref({
   name: '',
@@ -15,9 +16,20 @@ const newSource = ref({
 
 const confirmOpen = ref(false)
 const pendingRemoval = ref<(typeof sources.value)[number] | null>(null)
+const pendingSelection = ref<string | null>(null)
+const confirmationType = ref<'remove' | 'switch'>('remove')
+
 const confirmMessage = computed(() => {
-  if (!pendingRemoval.value) return ''
-  return `Delete OpenAPI source "${pendingRemoval.value.name}"? This action cannot be undone.`
+  if (confirmationType.value === 'remove' && pendingRemoval.value) {
+    return `Delete OpenAPI source "${pendingRemoval.value.name}"? This action cannot be undone.`
+  } else if (confirmationType.value === 'switch' && pendingSelection.value) {
+    return `Switching to a different OpenAPI source will clear your current workflow. Do you want to continue?`
+  }
+  return ''
+})
+
+const confirmTitle = computed(() => {
+  return confirmationType.value === 'remove' ? 'Remove OpenAPI source?' : 'Switch OpenAPI source?'
 })
 
 const addSource = () => {
@@ -39,6 +51,7 @@ const removeSource = (name: string) => {
 const requestRemoveSource = (source: (typeof sources.value)[number]) => {
   if (source.type === 'openapi') {
     pendingRemoval.value = source
+    confirmationType.value = 'remove'
     confirmOpen.value = true
     return
   }
@@ -56,6 +69,52 @@ const confirmRemoval = () => {
 const cancelRemoval = () => {
   pendingRemoval.value = null
   confirmOpen.value = false
+}
+
+const selectSource = (sourceName: string) => {
+  // If already selected, do nothing
+  if (selectedSource.value?.name === sourceName) return
+
+  // Check if there's existing workflow data
+  if (workflowStore.hasWorkflowData()) {
+    pendingSelection.value = sourceName
+    confirmationType.value = 'switch'
+    confirmOpen.value = true
+    return
+  }
+
+  // No workflow data, just select
+  workflowStore.selectSource(sourceName)
+}
+
+const confirmSwitch = () => {
+  if (!pendingSelection.value) return
+
+  // Clear workflow data and switch to new source
+  workflowStore.clearWorkflowData()
+  workflowStore.selectSource(pendingSelection.value)
+  pendingSelection.value = null
+}
+
+const cancelSwitch = () => {
+  pendingSelection.value = null
+  confirmOpen.value = false
+}
+
+const handleConfirm = () => {
+  if (confirmationType.value === 'remove') {
+    confirmRemoval()
+  } else {
+    confirmSwitch()
+  }
+}
+
+const handleCancel = () => {
+  if (confirmationType.value === 'remove') {
+    cancelRemoval()
+  } else {
+    cancelSwitch()
+  }
 }
 
 const cancelAdd = () => {
@@ -131,18 +190,28 @@ const cancelAdd = () => {
       <div
         v-for="source in sources"
         :key="source.name"
-        class="p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-600 rounded-md hover:border-blue-300 dark:hover:border-blue-500 transition-colors"
+        @click="selectSource(source.name)"
+        class="p-3 bg-white dark:bg-slate-800 border-2 rounded-md transition-all cursor-pointer"
+        :class="selectedSource?.name === source.name 
+          ? 'border-blue-500 dark:border-blue-400 shadow-md' 
+          : 'border-gray-200 dark:border-slate-600 hover:border-blue-300 dark:hover:border-blue-500'"
       >
         <div class="flex items-start justify-between">
           <div class="flex-1 min-w-0">
             <div class="flex items-center gap-2">
               <span class="font-medium text-sm text-gray-800 dark:text-gray-200 truncate">{{ source.name }}</span>
               <span class="text-xs px-2 py-0.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded">{{ source.type }}</span>
+              <span 
+                v-if="selectedSource?.name === source.name"
+                class="text-xs px-2 py-0.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded"
+              >
+                Active
+              </span>
             </div>
             <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">{{ source.url }}</p>
           </div>
           <button
-            @click="requestRemoveSource(source)"
+            @click.stop="requestRemoveSource(source)"
             class="ml-2 text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400"
             title="Remove source"
           >
@@ -156,13 +225,13 @@ const cancelAdd = () => {
 
     <ConfirmModal
       v-model:open="confirmOpen"
-      title="Remove OpenAPI source?"
+      :title="confirmTitle"
       :message="confirmMessage"
       confirmText="Delete"
       cancelText="Cancel"
       :destructive="true"
-      @confirm="confirmRemoval"
-      @cancel="cancelRemoval"
+      @confirm="handleConfirm"
+      @cancel="handleCancel"
     />
   </div>
 </template>
