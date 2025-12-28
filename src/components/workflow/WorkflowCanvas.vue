@@ -248,7 +248,7 @@ const addWorkflowNode = () => {
       <p class="font-medium mb-1">Quick Tips:</p>
       <ul class="space-y-1">
         <li>• Click "Add Workflow" button to create a workflow node</li>
-        <li>• Hover over nodes to see action toolbar</li>
+        <li>• Select nodes to see action toolbar</li>
         <li>• Click and drag to connect nodes</li>
         <li>• Select a node to view details in the inspector</li>
       </ul>
