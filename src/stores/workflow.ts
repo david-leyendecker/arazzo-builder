@@ -101,7 +101,7 @@ export const useWorkflowStore = defineStore('workflow', {
       
       // Auto-select the first source
       if (this.workflow.sourceDescriptions.length === 1) {
-        this.selectedSourceId = source.name
+        this.selectSource(source.name)
       }
       
       // Automatically fetch and parse the spec if it's an OpenAPI source
@@ -119,9 +119,25 @@ export const useWorkflowStore = defineStore('workflow', {
         this.workflow.sourceDescriptions.splice(index, 1)
       }
       
-      // If removing the selected source, clear selection
+      // If removing the selected source, select another one or clear viewport
       if (this.selectedSourceId === name) {
-        this.selectedSourceId = null
+        if (this.workflow.sourceDescriptions.length > 0) {
+          // Select the next source if available, otherwise the previous one
+          const newIndex = Math.min(index, this.workflow.sourceDescriptions.length - 1)
+          const newSource = this.workflow.sourceDescriptions[newIndex]
+          if (newSource) {
+            this.selectSource(newSource.name)
+          }
+        } else {
+          // No sources left, clear everything
+          this.selectedSourceId = null
+          this.nodes = []
+          this.connections = []
+          this.selectedNodeId = null
+          if (this.workflow.workflows[0]) {
+            this.workflow.workflows[0].steps = []
+          }
+        }
       }
       
       // Save sources to storage
@@ -312,12 +328,18 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     selectSource(sourceId: string | null) {
-      // Save current workflow before switching
-      if (this.selectedSourceId && this.selectedSourceId !== sourceId) {
+      // Save current workflow before switching (use OLD selectedSourceId)
+      const oldSourceId = this.selectedSourceId
+      if (oldSourceId && oldSourceId !== sourceId) {
+        // Save to the OLD source before changing
         this.saveWorkflowToStorage()
       }
       
+      // Now update to the new source
       this.selectedSourceId = sourceId
+      
+      // Save the new selection
+      this.saveSourcesToStorage()
       
       // Load workflow for the new source
       if (sourceId) {
@@ -330,7 +352,17 @@ export const useWorkflowStore = defineStore('workflow', {
         }
         
         // Then try to load saved workflow
-        this.loadWorkflowFromStorage()
+        const loaded = this.loadWorkflowFromStorage()
+        
+        // If no workflow was loaded (new source), create initial workflow structure
+        if (!loaded && this.nodes.length === 0) {
+          this.addNode({
+            id: 'workflow-root',
+            type: 'workflow',
+            data: { workflowId: 'main-workflow' },
+            position: { x: 100, y: 100 }
+          })
+        }
       }
     },
 

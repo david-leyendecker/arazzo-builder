@@ -98,8 +98,7 @@ const selectSource = (sourceName: string) => {
 const confirmSwitch = () => {
   if (!pendingSelection.value) return
 
-  // Clear workflow data and switch to new source
-  workflowStore.clearWorkflowData()
+  // selectSource() will handle saving the current workflow and loading the new one
   workflowStore.selectSource(pendingSelection.value)
   pendingSelection.value = null
 }
