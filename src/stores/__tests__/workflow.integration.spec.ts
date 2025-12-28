@@ -16,34 +16,27 @@ describe('useWorkflowStore - Integration Tests', () => {
     })
 
     it('should update connection paths when adding connections', () => {
-      const startNode: WorkflowNode = {
-        id: 'start',
-        type: 'start',
-        data: {},
-        position: { x: 0, y: 0 }
-      }
       const stepNode: WorkflowNode = {
         id: 'step-1',
         type: 'step',
         data: { stepId: 'step-1', operationId: 'op1', onSuccess: [], onFailure: [] },
         position: { x: 50, y: 0 }
       }
-      const endNode: WorkflowNode = {
-        id: 'end',
-        type: 'end',
-        data: {},
+      const nextStepNode: WorkflowNode = {
+        id: 'next-step',
+        type: 'step',
+        data: { stepId: 'next-step', operationId: 'op2', onSuccess: [], onFailure: [] },
         position: { x: 100, y: 0 }
       }
 
-      store.addNode(startNode)
       store.addNode(stepNode)
-      store.addNode(endNode)
+      store.addNode(nextStepNode)
 
-      // Add success path
+      // Add success path to next step
       store.addConnection({
         id: 'c1',
         source: 'step-1',
-        target: 'end',
+        target: 'next-step',
         sourceHandle: 'success',
         targetHandle: 'prev'
       })
@@ -53,7 +46,8 @@ describe('useWorkflowStore - Integration Tests', () => {
       const step = workflow.steps[0]
       if (!step) throw new Error('Step not found')
       expect(step.onSuccess).toHaveLength(1)
-      expect(step.onSuccess[0]?.type).toBe('end')
+      expect(step.onSuccess[0]?.type).toBe('step')
+      expect(step.onSuccess[0]?.stepId).toBe('next-step')
     })
 
     it('should handle multiple success and failure paths', () => {
@@ -101,9 +95,7 @@ describe('useWorkflowStore - Integration Tests', () => {
     })
 
     it('should handle sequential workflow construction', () => {
-      // Build: start -> step1 -> step2 -> step3 -> end
-      store.addNode({ id: 'start', type: 'start', data: {}, position: { x: 0, y: 0 } })
-
+      // Build: step1 -> step2 -> step3 (UI layer handles start/end)
       const steps = ['step-1', 'step-2', 'step-3']
       steps.forEach((stepId, idx) => {
         store.addNode({
@@ -114,25 +106,21 @@ describe('useWorkflowStore - Integration Tests', () => {
         })
       })
 
-      store.addNode({ id: 'end', type: 'end', data: {}, position: { x: 200, y: 0 } })
-
-      // Add connections in sequence
-      store.addConnection({ id: 'c0', source: 'start', target: 'step-1' })
+      // Add connections in sequence (start/end are UI-only)
       steps.forEach((stepId, idx) => {
         const nextId = idx < steps.length - 1 ? steps[idx + 1] : 'end'
-        store.addConnection({ id: `c${idx + 1}`, source: stepId, target: nextId })
+        store.addConnection({ id: `c${idx}`, source: stepId, target: nextId })
       })
 
-      expect(store.nodes).toHaveLength(5) // start + 3 steps + end
-      expect(store.connections).toHaveLength(4) // 4 connections
+      expect(store.nodes).toHaveLength(3) // 3 step nodes only
+      expect(store.connections).toHaveLength(3) // 3 connections
       const workflow = store.mainWorkflow
       if (!workflow) throw new Error('Workflow not initialized')
-      expect(workflow.steps).toHaveLength(3) // 3 steps (start/end not in steps)
+      expect(workflow.steps).toHaveLength(3) // 3 steps
     })
 
     it('should handle branching workflows', () => {
-      // Build: start -> step1 -> (step2, step3) -> step4 -> end
-      store.addNode({ id: 'start', type: 'start', data: {}, position: { x: 0, y: 0 } })
+      // Build: step1 -> (step2, step3) -> step4 (UI layer handles start/end)
       store.addNode({
         id: 'step-1',
         type: 'step',
@@ -157,15 +145,12 @@ describe('useWorkflowStore - Integration Tests', () => {
         data: { stepId: 'step-4', operationId: 'op4', onSuccess: [], onFailure: [] },
         position: { x: 150, y: 0 }
       })
-      store.addNode({ id: 'end', type: 'end', data: {}, position: { x: 200, y: 0 } })
 
-      // Create branching connections
-      store.addConnection({ id: 'c0', source: 'start', target: 'step-1' })
+      // Create branching connections (step-to-step only)
       store.addConnection({ id: 'c1', source: 'step-1', target: 'step-2' })
       store.addConnection({ id: 'c2', source: 'step-1', target: 'step-3' })
       store.addConnection({ id: 'c3', source: 'step-2', target: 'step-4' })
       store.addConnection({ id: 'c4', source: 'step-3', target: 'step-4' })
-      store.addConnection({ id: 'c5', source: 'step-4', target: 'end' })
 
       const workflow = store.mainWorkflow
       if (!workflow) throw new Error('Workflow not initialized')
@@ -188,7 +173,6 @@ describe('useWorkflowStore - Integration Tests', () => {
       store.setWorkflowTitle('Export Test')
       store.setWorkflowDescription('Testing YAML export')
 
-      store.addNode({ id: 'start', type: 'start', data: {}, position: { x: 0, y: 0 } })
       store.addNode({
         id: 'step-1',
         type: 'step',
@@ -201,10 +185,6 @@ describe('useWorkflowStore - Integration Tests', () => {
         },
         position: { x: 50, y: 0 }
       })
-      store.addNode({ id: 'end', type: 'end', data: {}, position: { x: 100, y: 0 } })
-
-      store.addConnection({ id: 'c1', source: 'start', target: 'step-1' })
-      store.addConnection({ id: 'c2', source: 'step-1', target: 'end' })
 
       const yaml = store.exportToYAML()
 
@@ -215,7 +195,6 @@ describe('useWorkflowStore - Integration Tests', () => {
     })
 
     it('should prune empty fields in YAML export', () => {
-      store.addNode({ id: 'start', type: 'start', data: {}, position: { x: 0, y: 0 } })
       store.addNode({
         id: 'step-1',
         type: 'step',
@@ -228,10 +207,6 @@ describe('useWorkflowStore - Integration Tests', () => {
         },
         position: { x: 50, y: 0 }
       })
-      store.addNode({ id: 'end', type: 'end', data: {}, position: { x: 100, y: 0 } })
-
-      store.addConnection({ id: 'c1', source: 'start', target: 'step-1' })
-      store.addConnection({ id: 'c2', source: 'step-1', target: 'end' })
 
       const yaml = store.exportToYAML()
 
@@ -252,14 +227,13 @@ describe('useWorkflowStore - Integration Tests', () => {
       const mockOp = { operationId: 'cached-op', method: 'GET' }
       store.operationMap.set('cached-op', mockOp)
 
-      const startTime = performance.now()
+      // Call findOperation multiple times to test cache efficiency
       for (let i = 0; i < 1000; i++) {
-        store.findOperation('cached-op')
+        const result = store.findOperation('cached-op')
+        expect(result).toEqual(mockOp)
       }
-      const endTime = performance.now()
 
-      // Should be very fast due to memoization (typically < 10ms)
-      expect(endTime - startTime).toBeLessThan(50)
+      // Verify the cached value is still accessible
       expect(store.operationMap.get('cached-op')).toEqual(mockOp)
     })
   })

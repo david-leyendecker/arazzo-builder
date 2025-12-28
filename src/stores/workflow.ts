@@ -309,12 +309,13 @@ export const useWorkflowStore = defineStore('workflow', {
         step.onFailure = []
       })
 
-      // Build paths from connections (using optimized node lookup)
+      // Build paths from connections (only step-to-step connections are supported)
       this.connections.forEach(conn => {
         const sourceNode = this._getNodeById(conn.source)
         const targetNode = this._getNodeById(conn.target)
         
         if (!sourceNode || sourceNode.type !== 'step') return
+        if (!targetNode || targetNode.type !== 'step') return
         
         const stepIndex = workflow.steps.findIndex(
           s => s.stepId === conn.source
@@ -328,8 +329,8 @@ export const useWorkflowStore = defineStore('workflow', {
         const sourceHandle = conn.sourceHandle || 'success'
         
         const target: ArazzoCriterionTarget = {
-          type: targetNode?.type === 'end' ? 'end' : 'step',
-          stepId: targetNode?.type === 'step' ? conn.target : undefined
+          type: 'step',
+          stepId: conn.target
         }
         
         if (sourceHandle === 'success') {
@@ -416,18 +417,6 @@ export const useWorkflowStore = defineStore('workflow', {
       if (!workflow) {
         errors.push('No workflow defined')
         return { valid: false, errors }
-      }
-      
-      // Check for start node
-      const hasStart = this.nodes.some(n => n.type === 'start')
-      if (!hasStart) {
-        errors.push('Workflow must have a start node')
-      }
-      
-      // Check for end node
-      const hasEnd = this.nodes.some(n => n.type === 'end')
-      if (!hasEnd) {
-        errors.push('Workflow must have an end node')
       }
       
       // Check each step has an operationId

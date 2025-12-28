@@ -17,8 +17,8 @@ export interface ArazzoParameter {
  * Represents a criterion target for step flow control
  */
 export interface ArazzoCriterionTarget {
-  type: 'step' | 'end';
-  stepId?: string;
+  type: 'step';
+  stepId: string;
   criteria?: string[];
 }
 
@@ -69,8 +69,9 @@ export interface ArazzoWorkflow {
 
 /**
  * Runtime types for the workflow builder
+ * Note: 'start' and 'end' are UI-only nodes created by WorkflowCanvas, not part of Arazzo spec
  */
-export type NodeType = 'start' | 'step' | 'end' | 'workflow';
+export type NodeType = 'step' | 'workflow';
 
 export interface WorkflowNode {
   id: string;

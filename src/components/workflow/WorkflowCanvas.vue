@@ -6,9 +6,7 @@ import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import { useWorkflowStore } from '../../stores/workflow'
 import WorkflowNodeComponent from '../../vue-flow/WorkflowNodeComponent.vue'
-import StartNodeComponent from '../../vue-flow/StartNodeComponent.vue'
 import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
-import EndNodeComponent from '../../vue-flow/EndNodeComponent.vue'
 
 // Import Vue Flow styles
 import '@vue-flow/core/dist/style.css'
@@ -24,9 +22,7 @@ const { onConnect } = useVueFlow()
 // Node types mapping - use markRaw to prevent Vue reactivity on components
 const nodeTypes = markRaw({
   workflow: WorkflowNodeComponent,
-  start: StartNodeComponent,
-  step: StepNodeComponent,
-  end: EndNodeComponent
+  step: StepNodeComponent
 } as any)
 
 // Use refs for nodes and edges instead of computed
@@ -111,6 +107,9 @@ const onNodeClick = (event: any) => {
 // Handle node drag end to update positions in store
 const onNodeDragStop = (event: any) => {
   if (event.node) {
+    // Ignore UI-only nodes (start/end)
+    if (event.node.id === 'start' || event.node.id === 'end') return
+    
     const node = workflowStore.nodes.find(n => n.id === event.node.id)
     if (node) {
       node.position = event.node.position

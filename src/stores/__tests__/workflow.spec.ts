@@ -159,13 +159,13 @@ describe('useWorkflowStore', () => {
     it('should defer path updates when flag is set', () => {
       const connection1: WorkflowConnection = {
         id: 'conn-1',
-        source: 'start',
-        target: 'step-1'
+        source: 'step-1',
+        target: 'step-2'
       }
       const connection2: WorkflowConnection = {
         id: 'conn-2',
-        source: 'step-1',
-        target: 'end'
+        source: 'step-2',
+        target: 'step-3'
       }
 
       store.deferPathUpdates = true
@@ -203,13 +203,13 @@ describe('useWorkflowStore', () => {
       const updatePathSpy = vi.spyOn(store, 'updateConnectionPaths')
 
       store.batchConnections(() => {
-        store.addConnection({ id: 'c1', source: 'start', target: 'step-1' })
+        store.addConnection({ id: 'c1', source: 'step-1', target: 'step-2' })
 
         store.batchConnections(() => {
-          store.addConnection({ id: 'c2', source: 'step-1', target: 'step-2' })
+          store.addConnection({ id: 'c2', source: 'step-2', target: 'step-3' })
         })
 
-        store.addConnection({ id: 'c3', source: 'step-2', target: 'end' })
+        store.addConnection({ id: 'c3', source: 'step-3', target: 'step-4' })
       })
 
       // Should only be called once total (nested batch defers, outer batch executes once)
@@ -241,23 +241,23 @@ describe('useWorkflowStore', () => {
     })
 
     it('_getIncomingConnections should find all connections targeting a node', () => {
-      store.addConnection({ id: 'c1', source: 'start', target: 'step-1' })
-      store.addConnection({ id: 'c2', source: 'step-2', target: 'step-1' })
-      store.addConnection({ id: 'c3', source: 'step-1', target: 'end' })
+      store.addConnection({ id: 'c1', source: 'step-1', target: 'step-2' })
+      store.addConnection({ id: 'c2', source: 'step-3', target: 'step-2' })
+      store.addConnection({ id: 'c3', source: 'step-2', target: 'step-4' })
 
-      const incoming = store._getIncomingConnections('step-1')
+      const incoming = store._getIncomingConnections('step-2')
       expect(incoming).toHaveLength(2)
       expect(incoming.map(c => c.id)).toEqual(['c1', 'c2'])
     })
 
     it('_getOutgoingConnections should find all connections from a node', () => {
-      store.addConnection({ id: 'c1', source: 'start', target: 'step-1' })
-      store.addConnection({ id: 'c2', source: 'step-1', target: 'step-2' })
-      store.addConnection({ id: 'c3', source: 'step-1', target: 'end' })
+      store.addConnection({ id: 'c1', source: 'step-1', target: 'step-2' })
+      store.addConnection({ id: 'c2', source: 'step-1', target: 'step-3' })
+      store.addConnection({ id: 'c3', source: 'step-1', target: 'step-4' })
 
       const outgoing = store._getOutgoingConnections('step-1')
-      expect(outgoing).toHaveLength(2)
-      expect(outgoing.map(c => c.id)).toEqual(['c2', 'c3'])
+      expect(outgoing).toHaveLength(3)
+      expect(outgoing.map(c => c.id)).toEqual(['c1', 'c2', 'c3'])
     })
   })
 
@@ -317,28 +317,7 @@ describe('useWorkflowStore', () => {
       store = useWorkflowStore()
     })
 
-    it('should validate missing start node', () => {
-      const result = store.validateWorkflow()
-      expect(result.valid).toBe(false)
-      expect(result.errors).toContain('Workflow must have a start node')
-    })
-
-    it('should validate missing end node', () => {
-      store.addNode({
-        id: 'start',
-        type: 'start',
-        data: {},
-        position: { x: 0, y: 0 }
-      })
-
-      const result = store.validateWorkflow()
-      expect(result.valid).toBe(false)
-      expect(result.errors).toContain('Workflow must have an end node')
-    })
-
     it('should validate step has operationId', () => {
-      store.addNode({ id: 'start', type: 'start', data: {}, position: { x: 0, y: 0 } })
-      store.addNode({ id: 'end', type: 'end', data: {}, position: { x: 100, y: 0 } })
       store.addNode({
         id: 'step-1',
         type: 'step',
@@ -352,16 +331,19 @@ describe('useWorkflowStore', () => {
     })
 
     it('should validate successful workflow', () => {
-      store.addNode({ id: 'start', type: 'start', data: {}, position: { x: 0, y: 0 } })
-      store.addNode({ id: 'end', type: 'end', data: {}, position: { x: 100, y: 0 } })
       store.addNode({
         id: 'step-1',
         type: 'step',
         data: { stepId: 'step-1', operationId: 'valid-op', onSuccess: [], onFailure: [] },
         position: { x: 50, y: 0 }
       })
-      store.addConnection({ id: 'c1', source: 'start', target: 'step-1' })
-      store.addConnection({ id: 'c2', source: 'step-1', target: 'end' })
+      store.addNode({
+        id: 'step-2',
+        type: 'step',
+        data: { stepId: 'step-2', operationId: 'valid-op-2', onSuccess: [], onFailure: [] },
+        position: { x: 100, y: 0 }
+      })
+      store.addConnection({ id: 'c1', source: 'step-1', target: 'step-2' })
 
       const result = store.validateWorkflow()
       expect(result.valid).toBe(true)
@@ -377,8 +359,7 @@ describe('useWorkflowStore', () => {
     })
 
     it('should reconnect incoming and outgoing edges', () => {
-      // Create a chain: start -> step-1 -> step-2 -> end
-      store.addNode({ id: 'start', type: 'start', data: {}, position: { x: 0, y: 0 } })
+      // Create a chain: step-1 -> step-2 -> step-3
       store.addNode({
         id: 'step-1',
         type: 'step',
@@ -391,22 +372,26 @@ describe('useWorkflowStore', () => {
         data: { stepId: 'step-2', operationId: 'op2', onSuccess: [], onFailure: [] },
         position: { x: 100, y: 0 }
       })
-      store.addNode({ id: 'end', type: 'end', data: {}, position: { x: 150, y: 0 } })
+      store.addNode({
+        id: 'step-3',
+        type: 'step',
+        data: { stepId: 'step-3', operationId: 'op3', onSuccess: [], onFailure: [] },
+        position: { x: 150, y: 0 }
+      })
 
-      store.addConnection({ id: 'c1', source: 'start', target: 'step-1' })
-      store.addConnection({ id: 'c2', source: 'step-1', target: 'step-2' })
-      store.addConnection({ id: 'c3', source: 'step-2', target: 'end' })
+      store.addConnection({ id: 'c1', source: 'step-1', target: 'step-2' })
+      store.addConnection({ id: 'c2', source: 'step-2', target: 'step-3' })
 
-      expect(store.connections).toHaveLength(3)
-      expect(store.nodes).toHaveLength(4)
-
-      // Remove step-1, should reconnect start -> step-2
-      store.removeStepWithReconnect('step-1')
-
-      expect(store.nodes).toHaveLength(3)
       expect(store.connections).toHaveLength(2)
-      // Should have: start -> step-2 and step-2 -> end
-      expect(store.connections.some(c => c.source === 'start' && c.target === 'step-2')).toBe(true)
+      expect(store.nodes).toHaveLength(3)
+
+      // Remove step-2, should reconnect step-1 -> step-3
+      store.removeStepWithReconnect('step-2')
+
+      expect(store.nodes).toHaveLength(2)
+      expect(store.connections).toHaveLength(1)
+      // Should have: step-1 -> step-3
+      expect(store.connections.some(c => c.source === 'step-1' && c.target === 'step-3')).toBe(true)
     })
 
     it('should clear selection if deleted node was selected', () => {
