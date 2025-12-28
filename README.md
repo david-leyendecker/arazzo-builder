@@ -40,8 +40,7 @@ src/
 │   ├── StepNodeComponent.vue
 │   ├── EndNodeComponent.vue
 │   ├── ParameterNodeComponent.vue
-│   ├── SuccessCriteriaNodeComponent.vue
-│   └── ContextMenu.vue   # Custom context menu
+│   └── SuccessCriteriaNodeComponent.vue
 ├── types/                # TypeScript type definitions
 │   └── arazzo.ts         # Arazzo specification types
 ├── App.vue               # Main application component
@@ -87,17 +86,20 @@ npm run preview
 
 ## Usage
 
-1. **Adding Nodes**: Right-click on the canvas to open the context menu and add Start, Step, or End nodes
-2. **Connecting Nodes**: Click and drag from one node to another to create connections
-3. **Editing Properties**: Select a node to view and edit its properties in the right panel
-4. **Managing Sources**: Add OpenAPI specification sources using the Source Manager
-5. **Exporting**: Click "Export YAML" to generate the Arazzo workflow specification
+1. **Adding Workflow Nodes**: Click the "Add Workflow" button on the canvas to create a workflow node
+2. **Adding Child Nodes**: Hover over Workflow or Step nodes to see the action toolbar with context-specific actions
+   - Workflow nodes: Add Step
+   - Step nodes: Add Parameter, Add Success Criteria, Add Next Step
+3. **Connecting Nodes**: Click and drag from one node to another to create connections
+4. **Editing Properties**: Select a node to view and edit its properties in the right panel
+5. **Managing Sources**: Add OpenAPI specification sources using the Source Manager
+6. **Exporting**: Click "Export YAML" to generate the Arazzo workflow specification
 
 ## Development Roadmap
 
 ### Phase 1: Core & Context Logic ✓
 - ✓ Setup Vue 3 + Vite + TS + Vue Flow
-- ✓ Implementation of Context Menu
+- ✓ Implementation of Node Toolbar (migrated from Context Menu)
 - ✓ Basic node types (Start, Step, End, Workflow, Parameter, Success Criteria)
 
 ### Phase 2: Arazzo Validation & YAML ✓
