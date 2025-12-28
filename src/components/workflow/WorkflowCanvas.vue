@@ -5,7 +5,6 @@ import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { MiniMap } from '@vue-flow/minimap'
 import { useWorkflowStore } from '../../stores/workflow'
-import type { ArazzoStep } from '../../types/arazzo'
 import WorkflowNodeComponent from '../../vue-flow/WorkflowNodeComponent.vue'
 import StartNodeComponent from '../../vue-flow/StartNodeComponent.vue'
 import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
@@ -45,7 +44,8 @@ watch(() => workflowStore.nodes, (newNodes) => {
     type: node.type,
     position: node.position || { x: 100, y: 100 },
     data: node.data,
-    label: node.type
+    label: node.type,
+    deletable: node.type !== 'workflow' // Workflow node cannot be deleted
   }))
 }, { immediate: true, deep: true })
 
@@ -127,52 +127,6 @@ const onPaneClick = () => {
   workflowStore.selectNode(null)
 }
 
-// Add node at cursor position (for canvas right-click, only workflow now)
-const addNodeAtCursor = (nodeType: string) => {
-  const timestamp = Date.now()
-  const id = `${nodeType}-${timestamp}`
-  
-  // Position at center of viewport
-  const position = { x: 250, y: 150 }
-  
-  const nodeData = createNodeData(nodeType, id)
-  
-  workflowStore.addNode({
-    id,
-    type: nodeType as any,
-    data: nodeData,
-    position
-  })
-}
-
-// Create node data based on type
-const createNodeData = (nodeType: string, id: string): any => {
-  switch (nodeType) {
-    case 'workflow':
-      return { workflowId: id }
-    case 'step':
-      return {
-        stepId: id,
-        operationId: '',
-        description: '',
-        parameters: [],
-        successCriteria: []
-      } as ArazzoStep
-    case 'parameter':
-      return {
-        name: '',
-        in: 'query',
-        value: ''
-      }
-    case 'criteria':
-      return {
-        criteria: ''
-      }
-    default:
-      return {}
-  }
-}
-
 // Watch for OpenAPI spec loading to auto-create workflow node
 watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) => {
   if (newVal && newVal !== oldVal) {
@@ -189,11 +143,6 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
     }
   }
 })
-
-// Add workflow node button (exposed for UI button)
-const addWorkflowNode = () => {
-  addNodeAtCursor('workflow')
-}
 </script>
 
 <template>
@@ -233,21 +182,11 @@ const addWorkflowNode = () => {
       </VueFlow>
     </div>
 
-    <!-- Add Workflow Button (since we removed canvas right-click) -->
-    <div class="absolute top-20 left-4 z-10">
-      <button 
-        @click="addWorkflowNode"
-        class="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 transition-colors shadow-lg"
-      >
-        ➕ Add Workflow
-      </button>
-    </div>
-
     <!-- Help Text -->
     <div class="absolute bottom-4 left-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur rounded-lg shadow-lg px-4 py-3 text-sm text-gray-600 dark:text-gray-300 z-10">
       <p class="font-medium mb-1">Quick Tips:</p>
       <ul class="space-y-1">
-        <li>• Click "Add Workflow" button to create a workflow node</li>
+        <li>• Add an OpenAPI source to auto-create the workflow node</li>
         <li>• Select nodes to see action toolbar</li>
         <li>• Click and drag to connect nodes</li>
         <li>• Select a node to view details in the inspector</li>

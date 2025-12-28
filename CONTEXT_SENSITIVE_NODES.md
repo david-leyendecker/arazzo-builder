@@ -42,14 +42,14 @@ The application supports hierarchical node creation based on the Arazzo specific
 ## Usage Workflow
 
 ### Step 1: Add an OpenAPI Source
-1. Open the Source Manager panel
-2. Add an OpenAPI specification URL
-3. **Automatic**: A Workflow root node is created on the canvas
+1. Open the Source Manager panel (right side)
+2. Click "+ Add" to add an OpenAPI specification URL
+3. **Automatic**: A Workflow root node is created on the canvas (this only happens once)
 
 ### Step 2: Build the Workflow Structure
-1. Hover over the **Workflow node** to see the toolbar → Click "Add Step"
+1. Select the **Workflow node** to see the toolbar → Click "Add Step"
 2. A new Step node appears, positioned automatically
-3. Hover over the **Step node** to see the toolbar → Choose from:
+3. Select the **Step node** to see the toolbar → Choose from:
    - "Parameter" - to add input parameters
    - "Criteria" - to add validation rules
    - "Next Step" - to chain API calls
@@ -61,15 +61,15 @@ The application supports hierarchical node creation based on the Arazzo specific
 
 ## Node Toolbars
 
-The toolbar appears when you hover over nodes and adapts based on the node type:
+The toolbar appears when you select a node and adapts based on the node type:
 
-| Node Type | Available Actions |
-|-----------|------------------|
-| Workflow node | Add Step |
-| Step node | Add Parameter, Add Success Criteria, Add Next Step |
-| Parameter/Criteria node | (No toolbar) |
+| Node Type | Available Actions | Deletable |
+|-----------|------------------|-----------|
+| Workflow node | Add Step | ❌ No (auto-created, singleton) |
+| Step node | Add Parameter, Add Success Criteria, Add Next Step | ✅ Yes |
+| Parameter/Criteria node | (No toolbar) | ✅ Yes |
 
-Note: Start and End nodes are available but not included in the toolbar system as they are legacy nodes.
+**Note:** The Workflow node is automatically created when you add an OpenAPI source and cannot be deleted. Only one workflow node is allowed per canvas.
 
 ## Programmatic API
 
