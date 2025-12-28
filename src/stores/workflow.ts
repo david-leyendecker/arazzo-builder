@@ -51,7 +51,9 @@ export const useWorkflowStore = defineStore('workflow', {
     parsedSpecs: [] as ParsedOpenAPISpec[],
     loadingSpecs: new Set<string>(),
     specErrors: {} as Record<string, string>,
-    triggerWorkflowNodeCreation: 0 as number // Timestamp trigger for workflow node creation
+    triggerWorkflowNodeCreation: 0 as number, // Timestamp trigger for workflow node creation
+    operationMap: new Map<string, any>(), // Memoized operation lookup for O(1) access
+    deferPathUpdates: false // Flag to batch updateConnectionPaths calls
   }),
 
   getters: {
@@ -86,6 +88,19 @@ export const useWorkflowStore = defineStore('workflow', {
   },
 
   actions: {
+    // Helper methods for internal optimization
+    _getIncomingConnections(nodeId: string) {
+      return this.connections.filter(c => c.target === nodeId)
+    },
+
+    _getOutgoingConnections(nodeId: string) {
+      return this.connections.filter(c => c.source === nodeId)
+    },
+
+    _getNodeById(nodeId: string) {
+      return this.nodes.find(n => n.id === nodeId)
+    },
+
     setWorkflowTitle(title: string) {
       this.workflow.info.title = title
       this.saveWorkflowToStorage()
@@ -224,9 +239,9 @@ export const useWorkflowStore = defineStore('workflow', {
       const node = this.nodes.find(n => n.id === stepId)
       if (!node || node.type !== 'step') return
 
-      // Capture existing connections before removal
-      const incoming = this.connections.filter(c => c.target === stepId)
-      const outgoing = this.connections.filter(c => c.source === stepId)
+      // Capture existing connections before removal (using optimized helpers)
+      const incoming = this._getIncomingConnections(stepId)
+      const outgoing = this._getOutgoingConnections(stepId)
 
       // Create new connections bridging incoming sources to outgoing targets
       incoming.forEach(inConn => {
@@ -264,7 +279,9 @@ export const useWorkflowStore = defineStore('workflow', {
 
     addConnection(connection: WorkflowConnection) {
       this.connections.push(connection)
-      this.updateConnectionPaths()
+      if (!this.deferPathUpdates) {
+        this.updateConnectionPaths()
+      }
       this.saveWorkflowToStorage()
     },
 
@@ -272,7 +289,9 @@ export const useWorkflowStore = defineStore('workflow', {
       const index = this.connections.findIndex(c => c.id === connectionId)
       if (index !== -1) {
         this.connections.splice(index, 1)
-        this.updateConnectionPaths()
+        if (!this.deferPathUpdates) {
+          this.updateConnectionPaths()
+        }
         this.saveWorkflowToStorage()
       }
     },
@@ -290,10 +309,10 @@ export const useWorkflowStore = defineStore('workflow', {
         step.onFailure = []
       })
 
-      // Build paths from connections
+      // Build paths from connections (using optimized node lookup)
       this.connections.forEach(conn => {
-        const sourceNode = this.nodes.find(n => n.id === conn.source)
-        const targetNode = this.nodes.find(n => n.id === conn.target)
+        const sourceNode = this._getNodeById(conn.source)
+        const targetNode = this._getNodeById(conn.target)
         
         if (!sourceNode || sourceNode.type !== 'step') return
         
@@ -518,12 +537,12 @@ export const useWorkflowStore = defineStore('workflow', {
           this.parsedSpecs.splice(existingIndex, 1)
         }
         
-        // Add the new spec
+        // Add the new spec and invalidate operation cache
         this.parsedSpecs.push(parsedSpec)
+        this.operationMap.clear()
         
         // Trigger workflow node creation (will be handled by the canvas component)
         this.triggerWorkflowNodeCreation = Date.now()
-        console.log('OpenAPI spec loaded, triggering workflow node creation:', this.triggerWorkflowNodeCreation)
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error'
         this.specErrors[sourceName] = errorMessage
@@ -534,13 +553,23 @@ export const useWorkflowStore = defineStore('workflow', {
     },
 
     /**
-     * Find an operation by operationId
+     * Find an operation by operationId (uses memoized map for O(1) lookup)
      */
     findOperation(operationId: string) {
+      // Check memoized map first
+      if (this.operationMap.has(operationId)) {
+        return this.operationMap.get(operationId)
+      }
+      
+      // Fallback: search specs and cache result
       for (const spec of this.parsedSpecs) {
         const operation = spec.operations.find(op => op.operationId === operationId)
-        if (operation) return operation
+        if (operation) {
+          this.operationMap.set(operationId, operation)
+          return operation
+        }
       }
+      
       return null
     },
 
@@ -683,6 +712,25 @@ export const useWorkflowStore = defineStore('workflow', {
       // Then load workflow for the selected source
       if (sourcesLoaded && this.selectedSourceId) {
         this.loadWorkflowFromStorage()
+      }
+    },
+
+    /**
+     * Batch multiple connection updates to defer path recalculation
+     * Usage: store.batchConnections(() => { ...add/remove connections... })
+     */
+    batchConnections(callback: () => void) {
+      const wasDeferred = this.deferPathUpdates
+      this.deferPathUpdates = true
+      
+      try {
+        callback()
+      } finally {
+        this.deferPathUpdates = wasDeferred
+        // Only update paths if we weren't already deferring
+        if (!wasDeferred) {
+          this.updateConnectionPaths()
+        }
       }
     }
   }
