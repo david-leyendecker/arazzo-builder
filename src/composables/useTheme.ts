@@ -71,7 +71,8 @@ export function useTheme() {
     if (mediaQuery.addEventListener) {
       mediaQuery.addEventListener('change', handleChange)
     } else {
-      // Fallback for older browsers
+      // Fallback for older browsers (Safari < 14)
+      // @ts-ignore - addListener is deprecated but needed for older browsers
       mediaQuery.addListener(handleChange)
     }
   }
