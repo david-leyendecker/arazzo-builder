@@ -261,7 +261,7 @@ const cancelAdd = () => {
 .title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--p-text-color);
   margin: 0;
 }
 
@@ -292,7 +292,7 @@ const cancelAdd = () => {
   text-align: center;
   padding: 1rem 0;
   font-size: 0.875rem;
-  color: var(--text-tertiary);
+  color: var(--p-text-muted-color);
 }
 
 .sources-list {
@@ -304,15 +304,15 @@ const cancelAdd = () => {
 .source-card {
   cursor: pointer;
   transition: all 0.2s;
-  border: 2px solid var(--border-primary);
+  border: 2px solid var(--p-surface-200);
 }
 
 .source-card:hover {
-  border-color: var(--accent-primary);
+  border-color: var(--p-primary-color);
 }
 
 .source-card-selected {
-  border-color: var(--accent-primary);
+  border-color: var(--p-primary-color);
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
 }
 
@@ -338,7 +338,7 @@ const cancelAdd = () => {
 .source-name {
   font-weight: 500;
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--p-text-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -346,7 +346,7 @@ const cancelAdd = () => {
 
 .source-url {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--p-text-muted-color);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

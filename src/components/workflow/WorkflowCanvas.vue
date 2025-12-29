@@ -170,7 +170,7 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
         :min-zoom="0.2"
         :max-zoom="4"
       >
-        <Background pattern-color="#aaa" :gap="20" />
+        <Background :pattern-color="'var(--p-text-muted-color)'" :gap="20" />
         <Controls />
         <MiniMap />
       </VueFlow>
@@ -202,8 +202,8 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
   left: 0;
   right: 0;
   z-index: 10;
-  background: var(--bg-primary);
-  border-bottom: 1px solid var(--border-primary);
+  background: var(--p-surface-0);
+  border-bottom: 1px solid var(--p-surface-200);
   padding: 0.75rem 1rem;
 }
 
@@ -216,7 +216,7 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 .app-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--p-text-color);
   margin: 0;
 }
 
@@ -232,13 +232,13 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
   position: absolute;
   bottom: 1rem;
   left: 1rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-surface-200);
   border-radius: 0.5rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   padding: 0.75rem 1rem;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: var(--p-text-muted-color);
   z-index: 10;
 }
 
@@ -258,36 +258,28 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 
 .workflow-canvas {
   background-image: 
-    linear-gradient(rgba(0, 0, 0, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    linear-gradient(var(--p-surface-200) 1px, transparent 1px),
+    linear-gradient(90deg, var(--p-surface-200) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
-/* Dark mode styles for Vue Flow Controls - using darker slate colors */
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls) {
-  background-color: rgb(15 23 42) !important;
-  border-color: rgb(51 65 85) !important;
+/* Vue Flow Controls styling using PrimeVue theme variables */
+.workflow-canvas-wrapper :deep(.vue-flow__controls) {
+  background-color: var(--p-surface-0) !important;
+  border-color: var(--p-surface-200) !important;
 }
 
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls-button) {
-  background-color: rgb(15 23 42) !important;
-  border-color: rgb(51 65 85) !important;
-  color: rgb(229 231 235) !important;
+.workflow-canvas-wrapper :deep(.vue-flow__controls-button) {
+  background-color: var(--p-surface-0) !important;
+  border-color: var(--p-surface-200) !important;
+  color: var(--p-text-color) !important;
 }
 
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls-button):hover {
-  background-color: rgb(30 41 59) !important;
+.workflow-canvas-wrapper :deep(.vue-flow__controls-button):hover {
+  background-color: var(--p-surface-100) !important;
 }
 
-:global(.dark) .workflow-canvas-wrapper :deep(.vue-flow__controls-button svg) {
-  fill: rgb(229 231 235) !important;
-}
-
-/* Dark mode background pattern */
-:global(.dark) .workflow-canvas {
-  background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 20px 20px;
+.workflow-canvas-wrapper :deep(.vue-flow__controls-button svg) {
+  fill: var(--p-text-color) !important;
 }
 </style>

@@ -1,124 +1,12 @@
 /* Import PrimeVue icons */
 @import 'primeicons/primeicons.css';
 
-/* CSS Custom Properties for Theming */
-:root {
-  --color-scheme: light;
-  
-  /* Background colors */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-tertiary: #f3f4f6;
-  
-  /* Text colors */
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-tertiary: #6b7280;
-  
-  /* Border colors */
-  --border-primary: #e5e7eb;
-  --border-secondary: #d1d5db;
-  
-  /* Accent colors */
-  --accent-primary: #3b82f6;
-  --accent-hover: #2563eb;
-  
-  /* PrimeVue color tokens for light mode */
-  --p-primary-50: #eff6ff;
-  --p-primary-100: #dbeafe;
-  --p-primary-200: #bfdbfe;
-  --p-primary-300: #93c5fd;
-  --p-primary-400: #60a5fa;
-  --p-primary-500: #3b82f6;
-  --p-primary-600: #2563eb;
-  --p-primary-700: #1d4ed8;
-  --p-primary-800: #1e40af;
-  --p-primary-900: #1e3a8a;
-  
-  --p-green-50: #f0fdf4;
-  --p-green-100: #dcfce7;
-  --p-green-200: #bbf7d0;
-  --p-green-300: #86efac;
-  --p-green-400: #4ade80;
-  --p-green-500: #22c55e;
-  --p-green-600: #16a34a;
-  --p-green-700: #15803d;
-  --p-green-800: #166534;
-  --p-green-900: #14532d;
-  
-  --p-red-50: #fef2f2;
-  --p-red-100: #fee2e2;
-  --p-red-200: #fecaca;
-  --p-red-300: #fca5a5;
-  --p-red-400: #f87171;
-  --p-red-500: #ef4444;
-  --p-red-600: #dc2626;
-  --p-red-700: #b91c1c;
-  --p-red-800: #991b1b;
-  --p-red-900: #7f1d1d;
-}
-
-:root.dark {
-  --color-scheme: dark;
-  
-  /* Background colors */
-  --bg-primary: #1f2937;
-  --bg-secondary: #111827;
-  --bg-tertiary: #374151;
-  
-  /* Text colors */
-  --text-primary: #f9fafb;
-  --text-secondary: #e5e7eb;
-  --text-tertiary: #d1d5db;
-  
-  /* Border colors */
-  --border-primary: #374151;
-  --border-secondary: #4b5563;
-  
-  /* Accent colors */
-  --accent-primary: #60a5fa;
-  --accent-hover: #3b82f6;
-  
-  /* PrimeVue color tokens for dark mode - adjusted for dark bg */
-  --p-primary-50: #1e3a8a;
-  --p-primary-100: #1e40af;
-  --p-primary-200: #1d4ed8;
-  --p-primary-300: #2563eb;
-  --p-primary-400: #3b82f6;
-  --p-primary-500: #60a5fa;
-  --p-primary-600: #93c5fd;
-  --p-primary-700: #bfdbfe;
-  --p-primary-800: #dbeafe;
-  --p-primary-900: #eff6ff;
-  
-  --p-green-50: #14532d;
-  --p-green-100: #166534;
-  --p-green-200: #15803d;
-  --p-green-300: #16a34a;
-  --p-green-400: #22c55e;
-  --p-green-500: #4ade80;
-  --p-green-600: #86efac;
-  --p-green-700: #bbf7d0;
-  --p-green-800: #dcfce7;
-  --p-green-900: #f0fdf4;
-  
-  --p-red-50: #7f1d1d;
-  --p-red-100: #991b1b;
-  --p-red-200: #b91c1c;
-  --p-red-300: #dc2626;
-  --p-red-400: #ef4444;
-  --p-red-500: #f87171;
-  --p-red-600: #fca5a5;
-  --p-red-700: #fecaca;
-  --p-red-800: #fee2e2;
-  --p-red-900: #fef2f2;
-}
-
 /* Custom styles for Arazzo Builder */
 body {
   margin: 0;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-  background: var(--bg-secondary);
+  background: var(--p-surface-0);
+  color: var(--p-text-color);
 }
 
 #app {

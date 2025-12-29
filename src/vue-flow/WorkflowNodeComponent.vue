@@ -57,44 +57,76 @@ const addStep = () => {
 </script>
 
 <template>
-  <div class="workflow-node bg-purple-500 text-white rounded-lg shadow-lg p-4 min-w-[200px]">
+  <div class="workflow-node">
     <NodeToolbar :is-visible="selected" :position="Position.Top">
       <button @click="addStep" class="toolbar-button">
         ➕ Add Step
       </button>
     </NodeToolbar>
-    <div class="font-bold text-sm mb-1">Workflow</div>
-    <div class="text-xs">{{ data.workflowId }}</div>
-    <div v-if="mw" class="mt-2 text-xs opacity-90">
+    <div class="node-title">Workflow</div>
+    <div class="node-subtitle">{{ data.workflowId }}</div>
+    <div v-if="mw" class="node-info">
       <div v-if="mw.summary">{{ mw.summary }}</div>
-      <div class="mt-1 flex gap-2">
+      <div class="node-stats">
         <span>Steps: {{ mw.steps.length }}</span>
         <span v-if="mw.dependsOn && mw.dependsOn.length > 0">Deps: {{ mw.dependsOn.length }}</span>
       </div>
     </div>
-    <Handle type="source" :position="Position.Right" id="steps" class="!bg-purple-300" />
+    <Handle type="source" :position="Position.Right" id="steps" class="handle-steps" />
   </div>
 </template>
 
 <style scoped>
 .workflow-node {
-  border: 2px solid #7c3aed;
+  background: var(--p-violet-500);
+  color: var(--p-violet-contrast-color);
+  border: 2px solid var(--p-violet-500);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  padding: 1rem;
+  min-width: 200px;
+}
+
+.node-title {
+  font-weight: 700;
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.node-subtitle {
+  font-size: 0.75rem;
+}
+
+.node-info {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  opacity: 0.9;
+}
+
+.node-stats {
+  margin-top: 0.25rem;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.handle-steps {
+  background: var(--p-violet-300) !important;
 }
 
 .toolbar-button {
-  background-color: white;
-  color: #7c3aed;
+  background-color: var(--p-surface-0);
+  color: var(--p-violet-500);
   padding: 0.375rem 0.75rem;
   border-radius: 0.375rem;
   font-size: 0.75rem;
   font-weight: 600;
-  border: 1px solid #7c3aed;
+  border: 1px solid var(--p-violet-500);
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .toolbar-button:hover {
-  background-color: #7c3aed;
-  color: white;
+  background-color: var(--p-violet-500);
+  color: var(--p-violet-contrast-color);
 }
 </style>

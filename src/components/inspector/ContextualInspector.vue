@@ -462,9 +462,9 @@ const handleBlur = () => {
     <h2 class="inspector-title">Inspector</h2>
 
     <!-- Validation Errors Panel -->
-    <div v-if="validationErrors.length > 0" class="mb-4 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 p-3 text-sm text-red-800 dark:text-red-200 space-y-2">
-      <div class="font-semibold">Validation issues</div>
-      <ul class="list-disc list-inside space-y-1">
+    <div v-if="validationErrors.length > 0" class="validation-panel">
+      <div class="validation-title">Validation issues</div>
+      <ul class="validation-list">
         <li v-for="(err, idx) in validationErrors" :key="idx">{{ err }}</li>
       </ul>
     </div>
@@ -483,20 +483,20 @@ const handleBlur = () => {
       </div>
 
       <!-- Workflow Node -->
-      <div v-if="isWorkflowNode && selectedNode" class="space-y-4">
+      <div v-if="isWorkflowNode && selectedNode" class="workflow-section">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Workflow ID</label>
+          <label class="field-label">Workflow ID</label>
           <input
             type="text"
             :value="(selectedNode.data as { workflowId: string }).workflowId"
             readonly
             class="field-input"
           />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Right-click this node to add steps.</p>
+          <p class="field-hint">Right-click this node to add steps.</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Summary</label>
+          <label class="field-label">Summary</label>
           <input
             type="text"
             :value="mainWorkflow?.summary || ''"
@@ -507,7 +507,7 @@ const handleBlur = () => {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+          <label class="field-label">Description</label>
           <Textarea
             :value="mainWorkflow?.description || ''"
             @input="updateWorkflowDescription"
@@ -518,7 +518,7 @@ const handleBlur = () => {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Inputs (JSON Schema)</label>
+          <label class="field-label">Inputs (JSON Schema)</label>
           <Textarea
             :value="mainWorkflow?.inputs ? JSON.stringify(mainWorkflow.inputs, null, 2) : ''"
             @blur="(e) => updateWorkflowInputs((e.target as HTMLTextAreaElement).value)"
@@ -595,7 +595,7 @@ const handleBlur = () => {
                 <InputText :value="(action as any).$ref" @input="(e) => updateSuccessActionRef(index, (e.target as HTMLInputElement).value)" placeholder="#/components/successActions/MyAction" size="small" />
               </div>
               <div v-else>
-                <label class="text-xs text-gray-600 dark:text-gray-400">Action (JSON)</label>
+                <label class="field-sublabel">Action (JSON)</label>
                 <Textarea :value="JSON.stringify(action, null, 2)" @blur="(e) => updateSuccessActionJSON(index, (e.target as HTMLTextAreaElement).value)" rows="3" class="code-textarea" />
               </div>
             </div>
@@ -619,7 +619,7 @@ const handleBlur = () => {
                 <InputText :value="(action as any).$ref" @input="(e) => updateFailureActionRef(index, (e.target as HTMLInputElement).value)" placeholder="#/components/failureActions/MyAction" size="small" />
               </div>
               <div v-else>
-                <label class="text-xs text-gray-600 dark:text-gray-400">Action (JSON)</label>
+                <label class="field-sublabel">Action (JSON)</label>
                 <Textarea :value="JSON.stringify(action, null, 2)" @blur="(e) => updateFailureActionJSON(index, (e.target as HTMLTextAreaElement).value)" rows="3" class="code-textarea" />
               </div>
             </div>
@@ -800,25 +800,25 @@ const handleBlur = () => {
 .inspector-title {
   font-size: 1.125rem;
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--p-text-color);
   margin: 0 0 1rem 0;
 }
 
 .empty-state {
   text-align: center;
   padding: 2rem 0;
-  color: var(--text-tertiary);
+  color: var(--p-text-muted-color);
 }
 
 .empty-icon {
   font-size: 3rem;
   margin-bottom: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--p-text-muted-color);
 }
 
 .empty-text {
   font-size: 0.875rem;
-  color: var(--text-tertiary);
+  color: var(--p-text-muted-color);
   font-style: italic;
   margin: 0;
 }
@@ -850,7 +850,49 @@ const handleBlur = () => {
 .section-label {
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--p-text-color);
+}
+
+.validation-panel {
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--p-red-200);
+  background: var(--p-red-50);
+  font-size: 0.875rem;
+  color: var(--p-red-700);
+}
+
+.validation-title {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.validation-list {
+  list-style: disc;
+  list-style-position: inside;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.workflow-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  margin-top: 0.25rem;
+}
+
+.field-sublabel {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+  display: block;
+  margin-bottom: 0.25rem;
 }
 
 .field-input {
@@ -864,13 +906,13 @@ const handleBlur = () => {
 
 .help-text {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--p-text-muted-color);
   margin: 0.25rem 0 0 0;
 }
 
 .loading-text {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--p-text-muted-color);
   margin-left: 0.5rem;
 }
 
@@ -883,8 +925,8 @@ const handleBlur = () => {
   z-index: 10;
   width: 100%;
   margin-top: 0.25rem;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-primary);
+  background: var(--p-surface-0);
+  border: 1px solid var(--p-surface-200);
   border-radius: 0.375rem;
   box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
   max-height: 15rem;
@@ -894,7 +936,7 @@ const handleBlur = () => {
 .suggestion-item {
   padding: 0.5rem 0.75rem;
   cursor: pointer;
-  border-bottom: 1px solid var(--border-primary);
+  border-bottom: 1px solid var(--p-surface-200);
 }
 
 .suggestion-item:last-child {
@@ -902,18 +944,18 @@ const handleBlur = () => {
 }
 
 .suggestion-item:hover {
-  background: var(--bg-tertiary);
+  background: var(--p-surface-100);
 }
 
 .suggestion-title {
   font-weight: 500;
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--p-text-color);
 }
 
 .suggestion-method {
   font-size: 0.75rem;
-  color: var(--text-tertiary);
+  color: var(--p-text-muted-color);
 }
 
 .method-name {
@@ -922,14 +964,14 @@ const handleBlur = () => {
 
 .suggestion-summary {
   font-size: 0.75rem;
-  color: var(--text-secondary);
+  color: var(--p-text-secondary-color);
   margin-top: 0.25rem;
 }
 
 .suggestion-empty {
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
-  color: var(--text-tertiary);
+  color: var(--p-text-muted-color);
   font-style: italic;
 }
 
@@ -948,9 +990,9 @@ const handleBlur = () => {
 .parameter-item,
 .output-item {
   padding: 0.75rem;
-  background: var(--bg-secondary);
+  background: var(--p-surface-50);
   border-radius: 0.375rem;
-  border: 1px solid var(--border-primary);
+  border: 1px solid var(--p-surface-200);
 }
 
 .parameter-row,
@@ -995,7 +1037,7 @@ const handleBlur = () => {
   padding: 0.5rem 0.75rem;
   border-radius: 0.375rem;
   font-size: 0.875rem;
-  color: var(--text-primary);
+  color: var(--p-text-color);
 }
 
 .success-flow {

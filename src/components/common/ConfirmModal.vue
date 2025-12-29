@@ -63,7 +63,7 @@ const handleConfirm = () => {
 <style scoped>
 .confirm-message {
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--p-text-secondary-color);
   font-size: 0.875rem;
   line-height: 1.5;
 }

@@ -1,6 +1,6 @@
 # Arazzo Builder – Copilot Instructions
 
-- **Tech stack**: Vue 3 + TypeScript (script setup), Vite, Tailwind, Pinia, Vue Flow; YAML export via js-yaml. Entry at [src/main.ts](src/main.ts) and shell layout in [src/App.vue](src/App.vue).
+- **Tech stack**: Vue 3 + TypeScript (script setup), Vite, PrimeVue (Aura theme), Pinia, Vue Flow; YAML export via js-yaml. Entry at [src/main.ts](src/main.ts) and shell layout in [src/App.vue](src/App.vue).
 - **Authoritative docs**: Prefer [README.md](README.md). Note [software-design-document.md](software-design-document.md) is outdated (references Rete.js); current graph engine is Vue Flow.
 
 ## Core data flow
@@ -15,7 +15,6 @@
 - Inspector: [src/components/inspector/ContextualInspector.vue](src/components/inspector/ContextualInspector.vue) reads `selectedNode/selectedStep` from the store. Operation ID input shows suggestions from loaded OpenAPI specs (`filterOperations`), validates via store, and auto-populates parameters on valid selection. Manages parameters, success criteria, outputs, requestBody JSON; onSuccess/onFailure are read-only (derived from connections).
 - Source manager: [src/components/source-manager/SourceManager.vue](src/components/source-manager/SourceManager.vue) adds/removes OpenAPI sources; adding triggers spec fetch + parse and emits the workflow root creation signal.
 - Confirmations: use the shared modal [src/components/common/ConfirmModal.vue](src/components/common/ConfirmModal.vue) instead of `alert/confirm`; see usage in [src/components/source-manager/SourceManager.vue](src/components/source-manager/SourceManager.vue) and [src/vue-flow/StepNodeComponent.vue](src/vue-flow/StepNodeComponent.vue).
-- Theme: [src/stores/theme.ts](src/stores/theme.ts) manages light/dark/auto; initialized in [src/main.ts](src/main.ts); toggle UI in [src/components/theme/ThemeToggle.vue](src/components/theme/ThemeToggle.vue).
 
 ## Modeling conventions
 - Node IDs: workflow root `workflow-root`; steps use `step-${timestamp}`; handles `success`/`failure` on steps, `prev` on targets, `steps` on workflow root. Keep these consistent when adding new node types.
@@ -32,7 +31,7 @@
 - Always funnel graph mutations through the workflow store to keep YAML export coherent and inspector data in sync.
 - When introducing new node types or handles, update both Vue Flow components and store path mapping (`updateConnectionPaths`) so onSuccess/onFailure stay accurate.
 - Keep UI state derived from store (watchers in WorkflowCanvas). Avoid duplicating node/edge state elsewhere.
-- Dark mode: rely on `useThemeStore.applyTheme()` and `dark` class on `html`; tailwind classes already handle dual themes.
+- Theming: uses PrimeVue Aura theme with `.dark-mode` class selector. Use PrimeVue design tokens (e.g., `var(--p-surface-0)`, `var(--p-text-color)`, `var(--p-primary-color)`) for consistent styling.
 - If adding validations or suggestions, reuse `parsedSpecs`/`validateOperationId` rather than refetching specs.
 
 Let me know which sections need more detail or if any behavior is unclear.
