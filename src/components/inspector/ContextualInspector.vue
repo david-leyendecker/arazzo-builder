@@ -5,10 +5,15 @@ import { filterOperations } from '../../services/openapi-service'
 import type { ArazzoParameter, ArazzoReusableRef } from '../../types/arazzo'
 import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
-import Button from 'primevue/button'
-import Select from 'primevue/select'
 import Badge from 'primevue/badge'
 import Message from 'primevue/message'
+import AutoComplete from 'primevue/autocomplete'
+import SectionHeader from './SectionHeader.vue'
+import KeyValueEditor from './KeyValueEditor.vue'
+import ParameterEditor from './ParameterEditor.vue'
+import SimpleParameterEditor from './SimpleParameterEditor.vue'
+import StringListEditor from './StringListEditor.vue'
+import ActionEditor from './ActionEditor.vue'
 
 const workflowStore = useWorkflowStore()
 
@@ -209,14 +214,10 @@ const updateWorkflowOutputValue = (key: string, value: any) => {
 
 // OperationId suggestions
 const operationIdInput = ref('')
-const showSuggestions = ref(false)
 const operationIdValidation = ref<{ valid: boolean; error?: string } | null>(null)
+const operationSuggestions = ref<any[]>([])
 
 const allOperations = computed(() => workflowStore.allOperations)
-const filteredOperations = computed(() => {
-  if (!operationIdInput.value) return allOperations.value
-  return filterOperations(allOperations.value, operationIdInput.value)
-})
 
 // Watch for selected step changes
 watch(selectedStep, (newStep) => {
@@ -232,16 +233,10 @@ if (selectedStep.value) {
 
 const updateOperationId = (value: string) => {
   operationIdInput.value = value
-  showSuggestions.value = false
-  
   if (selectedNode.value) {
     workflowStore.updateNode(selectedNode.value.id, { operationId: value })
-    
-    // Validate the operationId
     if (value) {
       operationIdValidation.value = workflowStore.validateOperationId(value)
-      
-      // Auto-populate parameters if valid
       if (operationIdValidation.value.valid) {
         autoPopulateParameters(value)
       }
@@ -251,15 +246,10 @@ const updateOperationId = (value: string) => {
   }
 }
 
-const handleOperationIdInput = (event: Event) => {
-  const value = (event.target as HTMLInputElement).value
+const onOperationInput = (value: string) => {
   operationIdInput.value = value
-  showSuggestions.value = value.length > 0 && filteredOperations.value.length > 0
-  
   if (selectedNode.value) {
     workflowStore.updateNode(selectedNode.value.id, { operationId: value })
-    
-    // Validate the operationId on input
     if (value && hasOpenAPISpecs.value) {
       operationIdValidation.value = workflowStore.validateOperationId(value)
     } else {
@@ -268,8 +258,17 @@ const handleOperationIdInput = (event: Event) => {
   }
 }
 
-const selectOperation = (operationId: string) => {
-  updateOperationId(operationId)
+const searchOperations = (event: any) => {
+  const query = event.query || ''
+  const list = query ? filterOperations(allOperations.value, query) : allOperations.value
+  operationSuggestions.value = list.slice(0, 10)
+}
+
+const onOperationSelect = (event: any) => {
+  const op = event.value
+  if (op && op.operationId) {
+    updateOperationId(op.operationId)
+  }
 }
 
 const updateDescription = (event: Event) => {
@@ -440,21 +439,7 @@ const updateRequestBody = (value: string) => {
 const hasOpenAPISpecs = computed(() => workflowStore.parsedSpecs.length > 0)
 const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
 
-// Select options for parameter "in" field
-const parameterInOptions = [
-  { label: 'Path', value: 'path' },
-  { label: 'Query', value: 'query' },
-  { label: 'Header', value: 'header' },
-  { label: 'Cookie', value: 'cookie' },
-  { label: 'Body', value: 'body' }
-]
-
-// Delay for blur event to allow click on suggestion dropdown
-const SUGGESTION_DROPDOWN_DELAY_MS = 200
-
-const handleBlur = () => {
-  window.setTimeout(() => showSuggestions.value = false, SUGGESTION_DROPDOWN_DELAY_MS)
-}
+// No custom dropdown/blur handling needed with AutoComplete
 </script>
 
 <template>
@@ -486,8 +471,7 @@ const handleBlur = () => {
       <div v-if="isWorkflowNode && selectedNode" class="workflow-section">
         <div>
           <label class="field-label">Workflow ID</label>
-          <input
-            type="text"
+          <InputText
             :value="(selectedNode.data as { workflowId: string }).workflowId"
             readonly
             class="field-input"
@@ -497,8 +481,7 @@ const handleBlur = () => {
 
         <div>
           <label class="field-label">Summary</label>
-          <input
-            type="text"
+          <InputText
             :value="mainWorkflow?.summary || ''"
             @input="updateWorkflowSummary"
             placeholder="Brief summary of workflow"
@@ -530,118 +513,72 @@ const handleBlur = () => {
 
         <!-- dependsOn -->
         <div>
-          <div class="section-header">
-            <label class="section-label">Depends On</label>
-            <Button @click="addDependsOn" label="Add" icon="pi pi-plus" text size="small" />
-          </div>
+          <SectionHeader label="Depends On" @add="addDependsOn" />
           <div v-if="!mainWorkflow?.dependsOn || mainWorkflow.dependsOn.length === 0" class="empty-text">No dependencies</div>
-          <div v-else class="items-list">
-            <div v-for="(dep, index) in mainWorkflow.dependsOn" :key="index" class="parameter-item">
-              <div class="parameter-row">
-                <InputText
-                  :value="dep"
-                  @input="(e) => updateDependsOn(index, (e.target as HTMLInputElement).value)"
-                  placeholder="$sourceDescriptions.name.workflowId or local workflowId"
-                  size="small"
-                  class="flex-1-input"
-                />
-                <Button @click="removeDependsOn(index)" icon="pi pi-times" text rounded severity="danger" size="small" title="Remove" />
-              </div>
-            </div>
-          </div>
+          <StringListEditor
+            v-else
+            :items="mainWorkflow.dependsOn"
+            placeholder="$sourceDescriptions.name.workflowId or local workflowId"
+            @update:item="updateDependsOn"
+            @remove="removeDependsOn"
+          />
         </div>
 
         <!-- Workflow Parameters -->
         <div>
-          <div class="section-header">
-            <label class="section-label">Workflow Parameters</label>
-            <Button @click="addWorkflowParameter" label="Add" icon="pi pi-plus" text size="small" />
-          </div>
+          <SectionHeader label="Workflow Parameters" @add="addWorkflowParameter" />
           <div v-if="!mainWorkflow?.parameters || mainWorkflow.parameters.length === 0" class="empty-text">No parameters</div>
-          <div v-else class="items-list">
-            <div v-for="(param, index) in mainWorkflow.parameters" :key="index" class="parameter-item">
-              <div class="parameter-row">
-                <div class="parameter-inputs">
-                  <label class="text-xs"><input type="checkbox" :checked="(param as any).$ref !== undefined" @change="(e) => toggleWorkflowParameterRef(index, (e.target as HTMLInputElement).checked)" /> Use $ref</label>
-                </div>
-                <Button @click="removeWorkflowParameter(index)" icon="pi pi-times" text rounded severity="danger" size="small" title="Remove" />
-              </div>
-              <div v-if="(param as any).$ref !== undefined" class="items-list">
-                <InputText :value="(param as any).$ref" @input="(e) => updateWorkflowParameterRef(index, (e.target as HTMLInputElement).value)" placeholder="#/components/parameters/MyParam" size="small" />
-              </div>
-              <div v-else class="parameter-inputs">
-                <InputText :value="(param as any).name" @input="(e) => updateWorkflowParameterField(index, 'name', (e.target as HTMLInputElement).value)" placeholder="Parameter name" size="small" />
-                <Select :modelValue="(param as any).in" @update:modelValue="(value) => updateWorkflowParameterField(index, 'in', value)" :options="parameterInOptions" optionLabel="label" optionValue="value" size="small" />
-                <InputText :value="(param as any).value" @input="(e) => updateWorkflowParameterField(index, 'value', (e.target as HTMLInputElement).value)" placeholder="Value or expression" size="small" class="col-span-2" />
-              </div>
-            </div>
-          </div>
+          <ParameterEditor
+            v-else
+            :parameters="mainWorkflow.parameters"
+            @toggle-ref="toggleWorkflowParameterRef"
+            @update:field="updateWorkflowParameterField"
+            @update:ref="updateWorkflowParameterRef"
+            @remove="removeWorkflowParameter"
+          />
         </div>
 
         <!-- Success Actions -->
         <div>
-          <div class="section-header">
-            <label class="section-label">Success Actions</label>
-            <Button @click="addSuccessAction" label="Add" icon="pi pi-plus" text size="small" />
-          </div>
+          <SectionHeader label="Success Actions" @add="addSuccessAction" />
           <div v-if="!mainWorkflow?.successActions || mainWorkflow.successActions.length === 0" class="empty-text">None</div>
-          <div v-else class="items-list">
-            <div v-for="(action, index) in mainWorkflow.successActions" :key="index" class="parameter-item">
-              <div class="parameter-row">
-                <label class="text-xs"><input type="checkbox" :checked="(action as any).$ref !== undefined" @change="(e) => setSuccessActionRefMode(index, (e.target as HTMLInputElement).checked)" /> Use $ref</label>
-                <Button @click="removeSuccessAction(index)" icon="pi pi-times" text rounded severity="danger" size="small" title="Remove" />
-              </div>
-              <div v-if="(action as any).$ref !== undefined" class="items-list">
-                <InputText :value="(action as any).$ref" @input="(e) => updateSuccessActionRef(index, (e.target as HTMLInputElement).value)" placeholder="#/components/successActions/MyAction" size="small" />
-              </div>
-              <div v-else>
-                <label class="field-sublabel">Action (JSON)</label>
-                <Textarea :value="JSON.stringify(action, null, 2)" @blur="(e) => updateSuccessActionJSON(index, (e.target as HTMLTextAreaElement).value)" rows="3" class="code-textarea" />
-              </div>
-            </div>
-          </div>
+          <ActionEditor
+            v-else
+            :actions="mainWorkflow.successActions"
+            @toggle-ref="setSuccessActionRefMode"
+            @update:ref="updateSuccessActionRef"
+            @update:json="updateSuccessActionJSON"
+            @remove="removeSuccessAction"
+          />
         </div>
 
         <!-- Failure Actions -->
         <div>
-          <div class="section-header">
-            <label class="section-label">Failure Actions</label>
-            <Button @click="addFailureAction" label="Add" icon="pi pi-plus" text size="small" />
-          </div>
+          <SectionHeader label="Failure Actions" @add="addFailureAction" />
           <div v-if="!mainWorkflow?.failureActions || mainWorkflow.failureActions.length === 0" class="empty-text">None</div>
-          <div v-else class="items-list">
-            <div v-for="(action, index) in mainWorkflow.failureActions" :key="index" class="parameter-item">
-              <div class="parameter-row">
-                <label class="text-xs"><input type="checkbox" :checked="(action as any).$ref !== undefined" @change="(e) => setFailureActionRefMode(index, (e.target as HTMLInputElement).checked)" /> Use $ref</label>
-                <Button @click="removeFailureAction(index)" icon="pi pi-times" text rounded severity="danger" size="small" title="Remove" />
-              </div>
-              <div v-if="(action as any).$ref !== undefined" class="items-list">
-                <InputText :value="(action as any).$ref" @input="(e) => updateFailureActionRef(index, (e.target as HTMLInputElement).value)" placeholder="#/components/failureActions/MyAction" size="small" />
-              </div>
-              <div v-else>
-                <label class="field-sublabel">Action (JSON)</label>
-                <Textarea :value="JSON.stringify(action, null, 2)" @blur="(e) => updateFailureActionJSON(index, (e.target as HTMLTextAreaElement).value)" rows="3" class="code-textarea" />
-              </div>
-            </div>
-          </div>
+          <ActionEditor
+            v-else
+            :actions="mainWorkflow.failureActions"
+            @toggle-ref="setFailureActionRefMode"
+            @update:ref="updateFailureActionRef"
+            @update:json="updateFailureActionJSON"
+            @remove="removeFailureAction"
+          />
         </div>
 
         <!-- Workflow Outputs -->
         <div>
-          <div class="section-header">
-            <label class="section-label">Workflow Outputs</label>
-            <Button @click="addWorkflowOutput" label="Add" icon="pi pi-plus" text size="small" />
-          </div>
+          <SectionHeader label="Workflow Outputs" @add="addWorkflowOutput" />
           <div v-if="!mainWorkflow?.outputs || Object.keys(mainWorkflow.outputs).length === 0" class="empty-text">None</div>
-          <div v-else class="items-list">
-            <div v-for="(value, key) in mainWorkflow.outputs" :key="key" class="output-item">
-              <div class="output-row">
-                <InputText :value="key" @blur="(e) => updateWorkflowOutputKey(key as string, (e.target as HTMLInputElement).value)" placeholder="Output name" size="small" class="flex-1-input" />
-                <Button @click="removeWorkflowOutput(key as string)" icon="pi pi-times" text rounded severity="danger" size="small" title="Remove" />
-              </div>
-              <InputText :value="value as any" @input="(e) => updateWorkflowOutputValue(key as string, (e.target as HTMLInputElement).value)" placeholder="Expression (e.g., $response.body.userId)" size="small" />
-            </div>
-          </div>
+          <KeyValueEditor
+            v-else
+            :items="mainWorkflow.outputs"
+            key-placeholder="Output name"
+            value-placeholder="Expression (e.g., $response.body.userId)"
+            @update:key="updateWorkflowOutputKey"
+            @update:value="updateWorkflowOutputValue"
+            @remove="removeWorkflowOutput"
+          />
         </div>
       </div>
 
@@ -657,15 +594,25 @@ const handleBlur = () => {
             Operation ID
             <span v-if="isLoadingSpecs" class="loading-text">(Loading specs...)</span>
           </label>
-          <InputText
-            :value="operationIdInput"
-            @input="handleOperationIdInput"
-            @focus="showSuggestions = operationIdInput.length > 0 && filteredOperations.length > 0"
-            @blur="handleBlur"
-            :invalid="operationIdValidation && !operationIdValidation.valid"
+          <AutoComplete
+            :modelValue="operationIdInput"
+            @update:modelValue="onOperationInput"
+            :suggestions="operationSuggestions"
+            optionLabel="operationId"
+            @complete="searchOperations"
+            @item-select="onOperationSelect"
+            :invalid="!!(operationIdValidation && !operationIdValidation.valid)"
             placeholder="e.g., getUserById"
             class="field-input"
-          />
+          >
+            <template #option="slotProps">
+              <div class="suggestion-item">
+                <div class="suggestion-title">{{ slotProps.option.operationId }}</div>
+                <div class="suggestion-method"><span class="method-name">{{ slotProps.option.method }}</span> {{ slotProps.option.path }}</div>
+                <div v-if="slotProps.option.summary" class="suggestion-summary">{{ slotProps.option.summary }}</div>
+              </div>
+            </template>
+          </AutoComplete>
           
           <!-- Validation feedback -->
           <Message v-if="operationIdValidation && !operationIdValidation.valid" severity="error" :closable="false" class="validation-message">
@@ -675,15 +622,7 @@ const handleBlur = () => {
             Valid operation
           </Message>
           
-          <!-- Suggestions dropdown -->
-          <div v-if="showSuggestions && hasOpenAPISpecs" class="suggestions-dropdown">
-            <div v-for="operation in filteredOperations.slice(0, 10)" :key="operation.operationId" @click="selectOperation(operation.operationId)" class="suggestion-item">
-              <div class="suggestion-title">{{ operation.operationId }}</div>
-              <div class="suggestion-method"><span class="method-name">{{ operation.method }}</span> {{ operation.path }}</div>
-              <div v-if="operation.summary" class="suggestion-summary">{{ operation.summary }}</div>
-            </div>
-            <div v-if="filteredOperations.length === 0" class="suggestion-empty">No matching operations found</div>
-          </div>
+          <!-- Suggestions handled via AutoComplete -->
           
           <!-- No specs warning -->
           <Message v-if="!hasOpenAPISpecs && !isLoadingSpecs" severity="warn" :closable="false" class="validation-message">
@@ -698,62 +637,48 @@ const handleBlur = () => {
 
         <!-- Parameters Section -->
         <div class="section">
-          <div class="section-header">
-            <label class="section-label">Parameters</label>
-            <Button @click="addParameter" label="Add" icon="pi pi-plus" text size="small" />
-          </div>
+          <SectionHeader label="Parameters" @add="addParameter" />
           
           <div v-if="!selectedStep?.parameters || selectedStep.parameters.length === 0" class="empty-text">No parameters defined</div>
           
-          <div v-else class="items-list">
-            <div v-for="(param, index) in selectedStep.parameters" :key="index" class="parameter-item">
-              <div class="parameter-row">
-                <div class="parameter-inputs">
-                  <InputText :value="param.name" @input="(e) => updateParameter(index, 'name', (e.target as HTMLInputElement).value)" placeholder="Parameter name" size="small" />
-                  <Select :modelValue="param.in" @update:modelValue="(value) => updateParameter(index, 'in', value)" :options="parameterInOptions" optionLabel="label" optionValue="value" size="small" />
-                </div>
-                <Button @click="removeParameter(index)" icon="pi pi-times" text rounded severity="danger" size="small" title="Remove parameter" />
-              </div>
-              <InputText :value="param.value" @input="(e) => updateParameter(index, 'value', (e.target as HTMLInputElement).value)" placeholder="Value (e.g., $inputs.userId, literal value)" size="small" />
-            </div>
-          </div>
+          <SimpleParameterEditor
+            v-else
+            :parameters="selectedStep.parameters"
+            @update:field="updateParameter"
+            @remove="removeParameter"
+          />
         </div>
 
         <!-- Success Criteria -->
         <div class="section">
-          <div class="section-header">
-            <label class="section-label">Success Criteria</label>
-            <Button @click="addSuccessCriteria" label="Add" icon="pi pi-plus" text size="small" />
-          </div>
+          <SectionHeader label="Success Criteria" @add="addSuccessCriteria" />
           
           <div v-if="!selectedStep?.successCriteria || selectedStep.successCriteria.length === 0" class="empty-text">No criteria defined</div>
           
-          <div v-else class="items-list">
-            <div v-for="(criteria, index) in selectedStep.successCriteria" :key="index" class="criteria-item">
-              <InputText :value="criteria" @input="(e) => updateSuccessCriteria(index, (e.target as HTMLInputElement).value)" placeholder="e.g., $statusCode == 200" size="small" class="flex-1-input" />
-              <Button @click="removeSuccessCriteria(index)" icon="pi pi-times" text rounded severity="danger" size="small" title="Remove criteria" />
-            </div>
-          </div>
+          <StringListEditor
+            v-else
+            :items="selectedStep.successCriteria"
+            placeholder="e.g., $statusCode == 200"
+            @update:item="updateSuccessCriteria"
+            @remove="removeSuccessCriteria"
+          />
         </div>
 
         <!-- Outputs Section -->
         <div class="section">
-          <div class="section-header">
-            <label class="section-label">Outputs</label>
-            <Button @click="addOutput" label="Add" icon="pi pi-plus" text size="small" />
-          </div>
+          <SectionHeader label="Outputs" @add="addOutput" />
           
           <div v-if="!selectedStep?.outputs || Object.keys(selectedStep.outputs).length === 0" class="empty-text">No outputs defined</div>
           
-          <div v-else class="items-list">
-            <div v-for="(value, key) in selectedStep.outputs" :key="key" class="output-item">
-              <div class="output-row">
-                <InputText :value="key" @blur="(e) => updateOutputKey(key as string, (e.target as HTMLInputElement).value)" placeholder="Output name" size="small" class="flex-1-input" />
-                <Button @click="removeOutput(key as string)" icon="pi pi-times" text rounded severity="danger" size="small" title="Remove output" />
-              </div>
-              <InputText :value="value as any" @input="(e) => updateOutputValue(key as string, (e.target as HTMLInputElement).value)" placeholder="e.g., $response.body.userId" size="small" />
-            </div>
-          </div>
+          <KeyValueEditor
+            v-else
+            :items="selectedStep.outputs"
+            key-placeholder="Output name"
+            value-placeholder="e.g., $response.body.userId"
+            @update:key="updateOutputKey"
+            @update:value="updateOutputValue"
+            @remove="removeOutput"
+          />
         </div>
 
         <!-- Request Body Section -->
@@ -795,6 +720,8 @@ const handleBlur = () => {
 <style scoped>
 .contextual-inspector {
   padding: 1rem;
+  overflow-y: auto;
+  height: 100%;
 }
 
 .inspector-title {
@@ -846,8 +773,7 @@ const handleBlur = () => {
   gap: 0.25rem;
 }
 
-.field-label,
-.section-label {
+.field-label {
   font-size: 0.875rem;
   font-weight: 500;
   color: var(--p-text-color);
@@ -888,13 +814,6 @@ const handleBlur = () => {
   margin-top: 0.25rem;
 }
 
-.field-sublabel {
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
 .field-input {
   width: 100%;
 }
@@ -918,19 +837,6 @@ const handleBlur = () => {
 
 .operation-field {
   position: relative;
-}
-
-.suggestions-dropdown {
-  position: absolute;
-  z-index: 10;
-  width: 100%;
-  margin-top: 0.25rem;
-  background: var(--p-surface-0);
-  border: 1px solid var(--p-surface-200);
-  border-radius: 0.375rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  max-height: 15rem;
-  overflow: auto;
 }
 
 .suggestion-item {
@@ -966,59 +872,6 @@ const handleBlur = () => {
   font-size: 0.75rem;
   color: var(--p-text-secondary-color);
   margin-top: 0.25rem;
-}
-
-.suggestion-empty {
-  padding: 0.5rem 0.75rem;
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
-  font-style: italic;
-}
-
-.section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.parameter-item,
-.output-item {
-  padding: 0.75rem;
-  background: var(--p-surface-50);
-  border-radius: 0.375rem;
-  border: 1px solid var(--p-surface-200);
-}
-
-.parameter-row,
-.output-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.parameter-inputs {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-
-.criteria-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.flex-1-input {
-  flex: 1;
 }
 
 .code-textarea {

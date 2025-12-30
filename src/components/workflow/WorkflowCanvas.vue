@@ -8,6 +8,8 @@ import { useWorkflowStore } from '../../stores/workflow'
 import WorkflowNodeComponent from '../../vue-flow/WorkflowNodeComponent.vue'
 import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
 import Button from 'primevue/button'
+import Toolbar from 'primevue/toolbar'
+import Card from 'primevue/card'
 
 // Import Vue Flow styles
 import '@vue-flow/core/dist/style.css'
@@ -145,16 +147,18 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 <template>
   <div class="workflow-canvas-wrapper">
     <!-- Header Bar -->
-    <div class="header-bar">
-      <div class="header-content">
+    <Toolbar class="header-toolbar">
+      <template #start>
         <h1 class="app-title">Arazzo Workflow Builder</h1>
+      </template>
+      <template #end>
         <Button 
           @click="handleExportYAML"
           label="Export YAML"
           icon="pi pi-download"
         />
-      </div>
-    </div>
+      </template>
+    </Toolbar>
 
     <!-- Vue Flow Canvas -->
     <div class="canvas-container">
@@ -177,15 +181,19 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
     </div>
 
     <!-- Help Text -->
-    <div class="help-panel">
-      <p class="help-title">Quick Tips:</p>
-      <ul class="help-list">
-        <li>• Add an OpenAPI source to auto-create the workflow node</li>
-        <li>• Select nodes to see action toolbar</li>
-        <li>• Click and drag to connect nodes</li>
-        <li>• Select a node to view details in the inspector</li>
-      </ul>
-    </div>
+    <Card class="help-card">
+      <template #title>
+        <span class="help-title">Quick Tips</span>
+      </template>
+      <template #content>
+        <ul class="help-list">
+          <li>• Add an OpenAPI source to auto-create the workflow node</li>
+          <li>• Select nodes to see action toolbar</li>
+          <li>• Click and drag to connect nodes</li>
+          <li>• Select a node to view details in the inspector</li>
+        </ul>
+      </template>
+    </Card>
   </div>
 </template>
 
@@ -196,27 +204,21 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
   position: relative;
 }
 
-.header-bar {
+.header-toolbar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
   z-index: 10;
-  background: var(--p-surface-0);
-  border-bottom: 1px solid var(--p-surface-200);
-  padding: 0.75rem 1rem;
-}
-
-.header-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  border-radius: 0;
+  border-left: none;
+  border-right: none;
+  border-top: none;
 }
 
 .app-title {
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--p-text-color);
   margin: 0;
 }
 
@@ -228,23 +230,25 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
   bottom: 0;
 }
 
-.help-panel {
+.help-card {
   position: absolute;
   bottom: 1rem;
   left: 1rem;
-  background: var(--p-surface-0);
-  border: 1px solid var(--p-surface-200);
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
-  padding: 0.75rem 1rem;
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
   z-index: 10;
+  width: 22rem;
+}
+
+.help-card :deep(.p-card-body) {
+  padding: 0.75rem;
+}
+
+.help-card :deep(.p-card-content) {
+  padding: 0;
 }
 
 .help-title {
-  font-weight: 500;
-  margin: 0 0 0.25rem 0;
+  font-size: 0.875rem;
+  font-weight: 600;
 }
 
 .help-list {
@@ -254,23 +258,23 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  font-size: 0.875rem;
+  color: var(--p-text-muted-color);
 }
 
 .workflow-canvas {
-  background-image: 
-    linear-gradient(var(--p-surface-200) 1px, transparent 1px),
-    linear-gradient(90deg, var(--p-surface-200) 1px, transparent 1px);
+  background-color: var(--p-surface-700);
   background-size: 20px 20px;
 }
 
 /* Vue Flow Controls styling using PrimeVue theme variables */
 .workflow-canvas-wrapper :deep(.vue-flow__controls) {
-  background-color: var(--p-surface-0) !important;
+  background-color: var(--p-surface-950) !important;
   border-color: var(--p-surface-200) !important;
 }
 
 .workflow-canvas-wrapper :deep(.vue-flow__controls-button) {
-  background-color: var(--p-surface-0) !important;
+  background-color: var(--p-surface-950) !important;
   border-color: var(--p-surface-200) !important;
   color: var(--p-text-color) !important;
 }
