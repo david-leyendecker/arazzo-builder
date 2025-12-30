@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura';
+import FloatLabel from 'primevue/floatlabel'
 import './style.css'
 import 'primeicons/primeicons.css'
 import 'primeflex/primeflex.css'
@@ -22,6 +23,9 @@ app.use(PrimeVue, {
     }
   }
 })
+
+// Register FloatLabel globally
+app.component('FloatLabel', FloatLabel)
 
 // Initialize workflow store to load saved workflows
 const workflowStore = useWorkflowStore()

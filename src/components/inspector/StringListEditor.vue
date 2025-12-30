@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
+import { floatLabelConfig } from '../../config/float-label.config'
 
 defineProps<{
   items: string[]
@@ -14,15 +15,18 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="items-list">
-    <div v-for="(item, index) in items" :key="index" class="criteria-item">
-      <InputText
-        :value="item"
-        @input="(e) => $emit('update:item', index, (e.target as HTMLInputElement).value)"
-        :placeholder="placeholder || 'Value'"
-        size="small"
-        class="flex-1-input"
-      />
+  <div class="flex flex-column gap-3">
+    <div v-for="(item, index) in items" :key="index" class="flex align-items-center gap-2">
+      <FloatLabel :variant="floatLabelConfig.variant">
+        <InputText
+          :id="'item-' + index"
+          :value="item"
+          @input="(e) => $emit('update:item', index, (e.target as HTMLInputElement).value)"
+          size="small"
+          class="w-full"
+        />
+        <label :for="'item-' + index">{{ placeholder || 'Value' }}</label>
+      </FloatLabel>
       <Button
         @click="$emit('remove', index)"
         icon="pi pi-times"
@@ -37,19 +41,5 @@ defineEmits<{
 </template>
 
 <style scoped>
-.items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
 
-.criteria-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-}
-
-.flex-1-input {
-  flex: 1;
-}
 </style>

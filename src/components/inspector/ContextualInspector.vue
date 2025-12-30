@@ -8,7 +8,9 @@ import Textarea from 'primevue/textarea'
 import Badge from 'primevue/badge'
 import Message from 'primevue/message'
 import AutoComplete from 'primevue/autocomplete'
-import SectionHeader from './SectionHeader.vue'
+import Panel from 'primevue/panel'
+import Button from 'primevue/button'
+import { floatLabelConfig } from '../../config/float-label.config'
 import KeyValueEditor from './KeyValueEditor.vue'
 import ParameterEditor from './ParameterEditor.vue'
 import SimpleParameterEditor from './SimpleParameterEditor.vue'
@@ -480,40 +482,48 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
         </div>
 
         <div>
-          <label class="field-label">Summary</label>
-          <InputText
-            :value="mainWorkflow?.summary || ''"
-            @input="updateWorkflowSummary"
-            placeholder="Brief summary of workflow"
-            class="field-input"
-          />
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <InputText
+              id="workflow-summary"
+              :value="mainWorkflow?.summary || ''"
+              @input="updateWorkflowSummary"
+              class="field-input"
+            />
+            <label for="workflow-summary">Summary</label>
+          </FloatLabel>
         </div>
 
         <div>
-          <label class="field-label">Description</label>
-          <Textarea
-            :value="mainWorkflow?.description || ''"
-            @input="updateWorkflowDescription"
-            rows="3"
-            placeholder="CommonMark supported"
-            class="field-input"
-          />
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <Textarea
+              id="workflow-description"
+              :value="mainWorkflow?.description || ''"
+              @input="updateWorkflowDescription"
+              rows="3"
+              class="field-input"
+            />
+            <label for="workflow-description">Description</label>
+          </FloatLabel>
         </div>
 
         <div>
-          <label class="field-label">Inputs (JSON Schema)</label>
-          <Textarea
-            :value="mainWorkflow?.inputs ? JSON.stringify(mainWorkflow.inputs, null, 2) : ''"
-            @blur="(e) => updateWorkflowInputs((e.target as HTMLTextAreaElement).value)"
-            rows="4"
-            placeholder='{ "type": "object", "properties": { ... } }'
-            class="code-textarea"
-          />
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <Textarea
+              id="workflow-inputs"
+              :value="mainWorkflow?.inputs ? JSON.stringify(mainWorkflow.inputs, null, 2) : ''"
+              @blur="(e) => updateWorkflowInputs((e.target as HTMLTextAreaElement).value)"
+              rows="4"
+              class="code-textarea"
+            />
+            <label for="workflow-inputs">Inputs (JSON Schema)</label>
+          </FloatLabel>
         </div>
 
         <!-- dependsOn -->
-        <div>
-          <SectionHeader label="Depends On" @add="addDependsOn" />
+        <Panel header="Depends On" toggleable>
+          <template #icons>
+            <Button @click="addDependsOn" icon="pi pi-plus" text size="small" aria-label="Add Dependency" />
+          </template>
           <div v-if="!mainWorkflow?.dependsOn || mainWorkflow.dependsOn.length === 0" class="empty-text">No dependencies</div>
           <StringListEditor
             v-else
@@ -522,11 +532,13 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
             @update:item="updateDependsOn"
             @remove="removeDependsOn"
           />
-        </div>
+        </Panel>
 
         <!-- Workflow Parameters -->
-        <div>
-          <SectionHeader label="Workflow Parameters" @add="addWorkflowParameter" />
+        <Panel header="Workflow Parameters" toggleable>
+          <template #icons>
+            <Button @click="addWorkflowParameter" icon="pi pi-plus" text size="small" aria-label="Add Parameter" />
+          </template>
           <div v-if="!mainWorkflow?.parameters || mainWorkflow.parameters.length === 0" class="empty-text">No parameters</div>
           <ParameterEditor
             v-else
@@ -536,11 +548,13 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
             @update:ref="updateWorkflowParameterRef"
             @remove="removeWorkflowParameter"
           />
-        </div>
+        </Panel>
 
         <!-- Success Actions -->
-        <div>
-          <SectionHeader label="Success Actions" @add="addSuccessAction" />
+        <Panel header="Success Actions" toggleable>
+          <template #icons>
+            <Button @click="addSuccessAction" icon="pi pi-plus" text size="small" aria-label="Add Success Action" />
+          </template>
           <div v-if="!mainWorkflow?.successActions || mainWorkflow.successActions.length === 0" class="empty-text">None</div>
           <ActionEditor
             v-else
@@ -550,11 +564,13 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
             @update:json="updateSuccessActionJSON"
             @remove="removeSuccessAction"
           />
-        </div>
+        </Panel>
 
         <!-- Failure Actions -->
-        <div>
-          <SectionHeader label="Failure Actions" @add="addFailureAction" />
+        <Panel header="Failure Actions" toggleable>
+          <template #icons>
+            <Button @click="addFailureAction" icon="pi pi-plus" text size="small" aria-label="Add Failure Action" />
+          </template>
           <div v-if="!mainWorkflow?.failureActions || mainWorkflow.failureActions.length === 0" class="empty-text">None</div>
           <ActionEditor
             v-else
@@ -564,11 +580,13 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
             @update:json="updateFailureActionJSON"
             @remove="removeFailureAction"
           />
-        </div>
+        </Panel>
 
         <!-- Workflow Outputs -->
-        <div>
-          <SectionHeader label="Workflow Outputs" @add="addWorkflowOutput" />
+        <Panel header="Workflow Outputs" toggleable>
+          <template #icons>
+            <Button @click="addWorkflowOutput" icon="pi pi-plus" text size="small" aria-label="Add Output" />
+          </template>
           <div v-if="!mainWorkflow?.outputs || Object.keys(mainWorkflow.outputs).length === 0" class="empty-text">None</div>
           <KeyValueEditor
             v-else
@@ -579,40 +597,50 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
             @update:value="updateWorkflowOutputValue"
             @remove="removeWorkflowOutput"
           />
-        </div>
+        </Panel>
       </div>
 
       <!-- Step Node -->
       <div v-else-if="isStepNode" class="field-group">
         <div class="field">
-          <label class="field-label">Step ID</label>
-          <InputText :value="selectedStep?.stepId" readonly class="field-input" />
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <InputText
+              id="step-id"
+              :value="selectedStep?.stepId"
+              readonly
+              class="field-input"
+            />
+            <label for="step-id">Step ID</label>
+          </FloatLabel>
         </div>
 
         <div class="field operation-field">
-          <label class="field-label">
-            Operation ID
+          <div class="flex align-items-center gap-2 mb-2">
+            <span class="field-label">Operation ID</span>
             <span v-if="isLoadingSpecs" class="loading-text">(Loading specs...)</span>
-          </label>
-          <AutoComplete
-            :modelValue="operationIdInput"
-            @update:modelValue="onOperationInput"
-            :suggestions="operationSuggestions"
-            optionLabel="operationId"
-            @complete="searchOperations"
-            @item-select="onOperationSelect"
-            :invalid="!!(operationIdValidation && !operationIdValidation.valid)"
-            placeholder="e.g., getUserById"
-            class="field-input"
-          >
-            <template #option="slotProps">
-              <div class="suggestion-item">
-                <div class="suggestion-title">{{ slotProps.option.operationId }}</div>
-                <div class="suggestion-method"><span class="method-name">{{ slotProps.option.method }}</span> {{ slotProps.option.path }}</div>
-                <div v-if="slotProps.option.summary" class="suggestion-summary">{{ slotProps.option.summary }}</div>
-              </div>
-            </template>
-          </AutoComplete>
+          </div>
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <AutoComplete
+              id="operation-id"
+              :modelValue="operationIdInput"
+              @update:modelValue="onOperationInput"
+              :suggestions="operationSuggestions"
+              optionLabel="operationId"
+              @complete="searchOperations"
+              @item-select="onOperationSelect"
+              :invalid="!!(operationIdValidation && !operationIdValidation.valid)"
+              class="field-input"
+            >
+              <template #option="slotProps">
+                <div class="suggestion-item">
+                  <div class="suggestion-title">{{ slotProps.option.operationId }}</div>
+                  <div class="suggestion-method"><span class="method-name">{{ slotProps.option.method }}</span> {{ slotProps.option.path }}</div>
+                  <div v-if="slotProps.option.summary" class="suggestion-summary">{{ slotProps.option.summary }}</div>
+                </div>
+              </template>
+            </AutoComplete>
+            <label for="operation-id">e.g., getUserById</label>
+          </FloatLabel>
           
           <!-- Validation feedback -->
           <Message v-if="operationIdValidation && !operationIdValidation.valid" severity="error" :closable="false" class="validation-message">
@@ -631,13 +659,23 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
         </div>
 
         <div class="field">
-          <label class="field-label">Description</label>
-          <Textarea :value="selectedStep?.description || ''" @input="updateDescription" rows="3" placeholder="Describe this step..." class="field-input" />
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <Textarea
+              id="step-description"
+              :value="selectedStep?.description || ''"
+              @input="updateDescription"
+              rows="3"
+              class="field-input"
+            />
+            <label for="step-description">Description</label>
+          </FloatLabel>
         </div>
 
         <!-- Parameters Section -->
-        <div class="section">
-          <SectionHeader label="Parameters" @add="addParameter" />
+        <Panel header="Parameters" toggleable class="section">
+          <template #icons>
+            <Button @click="addParameter" icon="pi pi-plus" text size="small" aria-label="Add Parameter" />
+          </template>
           
           <div v-if="!selectedStep?.parameters || selectedStep.parameters.length === 0" class="empty-text">No parameters defined</div>
           
@@ -647,11 +685,13 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
             @update:field="updateParameter"
             @remove="removeParameter"
           />
-        </div>
+        </Panel>
 
         <!-- Success Criteria -->
-        <div class="section">
-          <SectionHeader label="Success Criteria" @add="addSuccessCriteria" />
+        <Panel header="Success Criteria" toggleable class="section">
+          <template #icons>
+            <Button @click="addSuccessCriteria" icon="pi pi-plus" text size="small" aria-label="Add Criteria" />
+          </template>
           
           <div v-if="!selectedStep?.successCriteria || selectedStep.successCriteria.length === 0" class="empty-text">No criteria defined</div>
           
@@ -662,11 +702,13 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
             @update:item="updateSuccessCriteria"
             @remove="removeSuccessCriteria"
           />
-        </div>
+        </Panel>
 
         <!-- Outputs Section -->
-        <div class="section">
-          <SectionHeader label="Outputs" @add="addOutput" />
+        <Panel header="Outputs" toggleable class="section">
+          <template #icons>
+            <Button @click="addOutput" icon="pi pi-plus" text size="small" aria-label="Add Output" />
+          </template>
           
           <div v-if="!selectedStep?.outputs || Object.keys(selectedStep.outputs).length === 0" class="empty-text">No outputs defined</div>
           
@@ -679,12 +721,20 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
             @update:value="updateOutputValue"
             @remove="removeOutput"
           />
-        </div>
+        </Panel>
 
         <!-- Request Body Section -->
         <div class="field">
-          <label class="field-label">Request Body (JSON)</label>
-          <Textarea :value="selectedStep?.requestBody ? JSON.stringify(selectedStep.requestBody, null, 2) : ''" @blur="(e) => updateRequestBody((e.target as HTMLTextAreaElement).value)" rows="4" placeholder='{ "key": "value" }' class="code-textarea" />
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <Textarea
+              id="request-body"
+              :value="selectedStep?.requestBody ? JSON.stringify(selectedStep.requestBody, null, 2) : ''"
+              @blur="(e) => updateRequestBody((e.target as HTMLTextAreaElement).value)"
+              rows="4"
+              class="code-textarea"
+            />
+            <label for="request-body">Request Body (JSON)</label>
+          </FloatLabel>
           <p class="help-text">Enter valid JSON for the request body</p>
         </div>
 

@@ -3,6 +3,7 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
+import { floatLabelConfig } from '../../config/float-label.config'
 import type { ArazzoReusableRef } from '../../types/arazzo'
 
 defineProps<{
@@ -40,21 +41,27 @@ defineEmits<{
         />
       </div>
       <div v-if="(action as any).$ref !== undefined" class="items-list">
-        <InputText
-          :value="(action as any).$ref"
-          @input="(e) => $emit('update:ref', index, (e.target as HTMLInputElement).value)"
-          placeholder="#/components/successActions/MyAction"
-          size="small"
-        />
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <InputText
+            id="action-ref-{{ index }}"
+            :value="(action as any).$ref"
+            @input="(e) => $emit('update:ref', index, (e.target as HTMLInputElement).value)"
+            size="small"
+          />
+          <label :for="'action-ref-' + index">Reference</label>
+        </FloatLabel>
       </div>
       <div v-else>
-        <label class="field-sublabel">Action (JSON)</label>
-        <Textarea
-          :value="JSON.stringify(action, null, 2)"
-          @blur="(e) => $emit('update:json', index, (e.target as HTMLTextAreaElement).value)"
-          rows="3"
-          class="code-textarea"
-        />
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <Textarea
+            :id="'action-json-' + index"
+            :value="JSON.stringify(action, null, 2)"
+            @blur="(e) => $emit('update:json', index, (e.target as HTMLTextAreaElement).value)"
+            rows="3"
+            class="code-textarea"
+          />
+          <label :for="'action-json-' + index">Action (JSON)</label>
+        </FloatLabel>
       </div>
     </div>
   </div>

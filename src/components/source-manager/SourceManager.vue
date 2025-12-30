@@ -6,6 +6,7 @@ import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Card from 'primevue/card'
+import { floatLabelConfig } from '../../config/float-label.config'
 
 const workflowStore = useWorkflowStore()
 
@@ -157,23 +158,33 @@ const cancelAdd = () => {
     <Card v-if="showAddForm" class="add-form">
       <template #content>
         <div class="form-fields">
-          <InputText
-            v-model="newSource.name"
-            placeholder="Source name"
-            class="input-field"
-          />
-          <InputText
-            v-model="newSource.url"
-            placeholder="URL or path"
-            class="input-field"
-          />
-          <Select
-            v-model="newSource.type"
-            :options="sourceTypeOptions"
-            optionLabel="label"
-            optionValue="value"
-            class="input-field"
-          />
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <InputText
+              id="source-name"
+              v-model="newSource.name"
+              class="input-field"
+            />
+            <label for="source-name">Source name</label>
+          </FloatLabel>
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <InputText
+              id="source-url"
+              v-model="newSource.url"
+              class="input-field"
+            />
+            <label for="source-url">URL or path</label>
+          </FloatLabel>
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <Select
+              id="source-type"
+              v-model="newSource.type"
+              :options="sourceTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              class="input-field"
+            />
+            <label for="source-type">Type</label>
+          </FloatLabel>
           <div class="form-actions">
             <Button
               @click="addSource"

@@ -4,6 +4,7 @@ import Select from 'primevue/select'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
 import { Panel } from 'primevue'
+import { floatLabelConfig } from '../../config/float-label.config'
 import type { ArazzoParameter, ArazzoReusableRef } from '../../types/arazzo'
 
 const props = defineProps<{
@@ -28,18 +29,16 @@ const parameterInOptions = [
 
 <template>
   <Panel>
-    <div v-for="(param, index) in parameters" :key="index" class="parameter-item">
-      <div class="parameter-row">
-        <div class="parameter-inputs">
-          <label class="text-xs">
-            <Checkbox
-              binary
-              :modelValue="(param as any).$ref !== undefined"
-              @update:modelValue="(value) => $emit('toggle-ref', index, !!value)"
-            />
-            Use $ref
-          </label>
-        </div>
+    <div v-for="(param, index) in parameters" :key="index">
+      <div class="flex align-items-start justify-content-between gap-2 mb-2">
+        <label class="text-xs flex align-items-center gap-1 flex-1">
+          <Checkbox
+            binary
+            :modelValue="(param as any).$ref !== undefined"
+            @update:modelValue="(value) => $emit('toggle-ref', index, !!value)"
+          />
+          Use $ref
+        </label>
         <Button
           @click="$emit('remove', index)"
           icon="pi pi-times"
@@ -50,78 +49,56 @@ const parameterInOptions = [
           title="Remove"
         />
       </div>
-      <div v-if="(param as any).$ref !== undefined" class="items-list">
-        <InputText
-          :value="(param as any).$ref"
-          @input="(e) => $emit('update:ref', index, (e.target as HTMLInputElement).value)"
-          placeholder="#/components/parameters/MyParam"
-          size="small"
-        />
+      <div v-if="(param as any).$ref !== undefined" class="flex flex-column gap-3">
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <InputText
+            :id="'param-ref-' + index"
+            :value="(param as any).$ref"
+            @input="(e) => $emit('update:ref', index, (e.target as HTMLInputElement).value)"
+            size="small"
+            class="w-full"
+          />
+          <label :for="'param-ref-' + index">Reference</label>
+        </FloatLabel>
       </div>
-      <div v-else class="parameter-inputs">
-        <InputText
-          :value="(param as ArazzoParameter).name"
-          @input="(e) => $emit('update:field', index, 'name', (e.target as HTMLInputElement).value)"
-          placeholder="Parameter name"
-          size="small"
-        />
-        <Select
-          :modelValue="(param as ArazzoParameter).in"
-          @update:modelValue="(value) => $emit('update:field', index, 'in', value)"
-          :options="parameterInOptions"
-          optionLabel="label"
-          optionValue="value"
-          size="small"
-        />
-        <InputText
-          :value="(param as ArazzoParameter).value"
-          @input="(e) => $emit('update:field', index, 'value', (e.target as HTMLInputElement).value)"
-          placeholder="Value or expression"
-          size="small"
-          class="col-span-2"
-        />
+      <div v-else class="flex flex-column gap-3">
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <InputText
+            :id="'param-name-' + index"
+            :value="(param as ArazzoParameter).name"
+            @input="(e) => $emit('update:field', index, 'name', (e.target as HTMLInputElement).value)"
+            size="small"
+            class="w-full"
+          />
+          <label :for="'param-name-' + index">Parameter name</label>
+        </FloatLabel>
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <Select
+            :id="'param-in-' + index"
+            :modelValue="(param as ArazzoParameter).in"
+            @update:modelValue="(value) => $emit('update:field', index, 'in', value)"
+            :options="parameterInOptions"
+            optionLabel="label"
+            optionValue="value"
+            size="small"
+            class="w-full"
+          />
+          <label :for="'param-in-' + index">Location</label>
+        </FloatLabel>
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <InputText
+            :id="'param-value-' + index"
+            :value="(param as ArazzoParameter).value"
+            @input="(e) => $emit('update:field', index, 'value', (e.target as HTMLInputElement).value)"
+            size="small"
+            class="w-full"
+          />
+          <label :for="'param-value-' + index">Value or expression</label>
+        </FloatLabel>
       </div>
     </div>
   </Panel>
 </template>
 
 <style scoped>
-.items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.parameter-item {
-  padding: 0.75rem;
-  background: var(--p-surface-50);
-  border-radius: 0.375rem;
-  border: 1px solid var(--p-surface-200);
-}
-
-.parameter-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.parameter-inputs {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
-}
-
-.text-xs {
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.col-span-2 {
-  grid-column: span 2;
-}
 </style>

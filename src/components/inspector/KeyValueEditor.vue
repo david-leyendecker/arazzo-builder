@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
+import { floatLabelConfig } from '../../config/float-label.config'
 
 const props = defineProps<{
   items: Record<string, any>
@@ -22,13 +23,16 @@ const entries = computed(() => Object.entries(props.items))
   <div class="items-list">
     <div v-for="[key, value] in entries" :key="key" class="output-item">
       <div class="output-row">
-        <InputText
-          :value="key"
-          @blur="(e) => $emit('update:key', key, (e.target as HTMLInputElement).value)"
-          :placeholder="keyPlaceholder || 'Key'"
-          size="small"
-          class="flex-1-input"
-        />
+        <FloatLabel :variant="floatLabelConfig.variant" class="flex-1">
+          <InputText
+            :id="'key-' + key"
+            :value="key"
+            @blur="(e) => $emit('update:key', key, (e.target as HTMLInputElement).value)"
+            size="small"
+            class="w-full"
+          />
+          <label :for="'key-' + key">{{ keyPlaceholder || 'Key' }}</label>
+        </FloatLabel>
         <Button
           @click="$emit('remove', key)"
           icon="pi pi-times"
@@ -39,12 +43,16 @@ const entries = computed(() => Object.entries(props.items))
           title="Remove"
         />
       </div>
-      <InputText
-        :value="value"
-        @input="(e) => $emit('update:value', key, (e.target as HTMLInputElement).value)"
-        :placeholder="valuePlaceholder || 'Value'"
-        size="small"
-      />
+      <FloatLabel :variant="floatLabelConfig.variant">
+        <InputText
+          :id="'value-' + key"
+          :value="value"
+          @input="(e) => $emit('update:value', key, (e.target as HTMLInputElement).value)"
+          size="small"
+          class="w-full"
+        />
+        <label :for="'value-' + key">{{ valuePlaceholder || 'Value' }}</label>
+      </FloatLabel>
     </div>
   </div>
 </template>
@@ -71,7 +79,7 @@ const entries = computed(() => Object.entries(props.items))
   margin-bottom: 0.5rem;
 }
 
-.flex-1-input {
+.flex-1 {
   flex: 1;
 }
 </style>
