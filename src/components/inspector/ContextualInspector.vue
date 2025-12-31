@@ -451,7 +451,7 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
     <!-- Validation Errors Panel -->
     <div v-if="validationErrors.length > 0" class="validation-panel">
       <div class="validation-title">Validation issues</div>
-      <ul class="validation-list">
+      <ul class="flex flex-column gap-1 validation-list">
         <li v-for="(err, idx) in validationErrors" :key="idx">{{ err }}</li>
       </ul>
     </div>
@@ -463,21 +463,24 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
     </div>
 
     <!-- Node Details -->
-    <div v-else class="inspector-content">
+    <div v-else class="flex flex-column gap-3 inspector-content">
       <!-- Node Type Badge -->
       <div v-if="selectedNode" class="node-badge-wrapper">
         <Badge :value="selectedNode.type" severity="info" />
       </div>
 
       <!-- Workflow Node -->
-      <div v-if="isWorkflowNode && selectedNode" class="workflow-section">
+      <div v-if="isWorkflowNode && selectedNode" class="flex flex-column gap-3">
         <div>
-          <label class="field-label">Workflow ID</label>
-          <InputText
-            :value="(selectedNode.data as { workflowId: string }).workflowId"
-            readonly
-            class="field-input"
-          />
+          <FloatLabel :variant="floatLabelConfig.variant">
+            <InputText
+              id="workflow-id"
+              :value="(selectedNode.data as { workflowId: string }).workflowId"
+              readonly
+              class="field-input"
+            />
+            <label for="workflow-id">Workflow ID</label>
+          </FloatLabel>
           <p class="field-hint">Right-click this node to add steps.</p>
         </div>
 
@@ -601,22 +604,20 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
       </div>
 
       <!-- Step Node -->
-      <div v-else-if="isStepNode" class="field-group">
+      <div v-else-if="isStepNode" class="flex flex-column gap-3">
         <div class="field">
           <FloatLabel :variant="floatLabelConfig.variant">
             <InputText
               id="step-id"
               :value="selectedStep?.stepId"
               readonly
-              class="field-input"
             />
             <label for="step-id">Step ID</label>
           </FloatLabel>
         </div>
 
-        <div class="field operation-field">
-          <div class="flex align-items-center gap-2 mb-2">
-            <span class="field-label">Operation ID</span>
+        <div class="field">
+          <div class="flex align-items-center gap-2">
             <span v-if="isLoadingSpecs" class="loading-text">(Loading specs...)</span>
           </div>
           <FloatLabel :variant="floatLabelConfig.variant">
@@ -639,7 +640,7 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
                 </div>
               </template>
             </AutoComplete>
-            <label for="operation-id">e.g., getUserById</label>
+            <label for="operation-id">Operation ID</label>
           </FloatLabel>
           
           <!-- Validation feedback -->
@@ -742,7 +743,7 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
         <div class="field">
           <label class="field-label">On Success</label>
           <div v-if="!selectedStep?.onSuccess || selectedStep.onSuccess.length === 0" class="empty-text">No success actions defined (connect nodes to define)</div>
-          <div v-else class="flow-items">
+          <div v-else class="flex flex-column gap-1">
             <div v-for="(target, index) in selectedStep.onSuccess" :key="index" class="flow-item success-flow">
               {{ `Go to step: ${target.stepId}` }}
             </div>
@@ -754,7 +755,7 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
         <div class="field">
           <label class="field-label">On Failure</label>
           <div v-if="!selectedStep?.onFailure || selectedStep.onFailure.length === 0" class="empty-text">No failure actions defined (connect nodes to define)</div>
-          <div v-else class="flow-items">
+          <div v-else class="flex flex-column gap-1">
             <div v-for="(target, index) in selectedStep.onFailure" :key="index" class="flow-item failure-flow">
               {{ `Go to step: ${target.stepId}` }}
             </div>
@@ -800,27 +801,8 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
   margin: 0;
 }
 
-.inspector-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .node-badge-wrapper {
   margin-bottom: 0.5rem;
-}
-
-.field-group,
-.section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
 }
 
 .field-label {
@@ -847,15 +829,6 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
 .validation-list {
   list-style: disc;
   list-style-position: inside;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.workflow-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 }
 
 .field-hint {
@@ -883,10 +856,6 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
   font-size: 0.75rem;
   color: var(--p-text-muted-color);
   margin-left: 0.5rem;
-}
-
-.operation-field {
-  position: relative;
 }
 
 .suggestion-item {
@@ -928,12 +897,6 @@ const isLoadingSpecs = computed(() => workflowStore.isLoadingSpecs)
   font-family: monospace;
   font-size: 0.85em;
   width: 100%;
-}
-
-.flow-items {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
 }
 
 .flow-item {
