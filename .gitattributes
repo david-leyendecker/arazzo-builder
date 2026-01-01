@@ -1,0 +1,14 @@
+* text=auto
+*.md text
+*.json text
+*.html text
+*.css text
+*.ts text
+*.js text
+*.vue text
+*.svg text
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
