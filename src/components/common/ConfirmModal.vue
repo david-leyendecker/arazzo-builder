@@ -41,7 +41,7 @@ const handleConfirm = () => {
     @update:visible="(value) => emit('update:open', value)"
     :header="title || 'Are you sure?'"
     modal
-    :style="{ width: '28rem' }"
+    :style="{ width: '50vw' }"
   >
     <p v-if="message" class="confirm-message">{{ message }}</p>
     

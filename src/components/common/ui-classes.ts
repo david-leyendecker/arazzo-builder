@@ -14,8 +14,25 @@ export const BUTTON_CLASSES = {
     severity: 'danger' as const,
     size: 'small' as const,
   },
+  deleteAction: {
+    icon: 'pi pi-trash',
+    text: true,
+    severity: 'danger' as const,
+  },
   exportAction: {
     icon: 'pi pi-download',
     size: 'small' as const,
+  },
+  editAction: {
+    icon: 'pi pi-pencil',
+    text: true,
+    size: 'small' as const,
+  },
+  cancelAction: {
+    severity: 'secondary' as const,
+    text: true,
+  },
+  confirmAction: {
+    icon: 'pi pi-check',
   },
 } as const

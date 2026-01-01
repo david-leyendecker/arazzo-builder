@@ -241,8 +241,7 @@ const handleCancel = () => {
             <div :class="CLASSES.optionUrl">{{ option.url }}</div>
           </div>
           <Button
-            icon="pi pi-pencil"
-            text
+            v-bind="BUTTON_CLASSES.editAction"
             @click.stop="openEditDialog(option)"
             aria-label="Edit source"
           />
@@ -306,21 +305,19 @@ const handleCancel = () => {
           <div :class="CLASSES.dialogFooter">
           <Button
             v-if="dialogMode === 'edit'"
-              v-bind="BUTTON_CLASSES.removeAction"
-              label="Delete"
-              icon="pi pi-trash"
+            v-bind="BUTTON_CLASSES.deleteAction"
+            label="Delete"
             @click="triggerDeleteFromDialog"
           />
             <div :class="CLASSES.dialogFooterRight">
             <Button
+              v-bind="BUTTON_CLASSES.cancelAction"
               label="Cancel"
-              severity="secondary"
-              text
               @click="closeDialog"
             />
             <Button
+              v-bind="BUTTON_CLASSES.confirmAction"
               :label="dialogMode === 'add' ? 'Add Source' : 'Save Changes'"
-              icon="pi pi-check"
               @click="submitDialog"
             />
           </div>
