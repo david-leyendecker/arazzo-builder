@@ -35,4 +35,14 @@ export const BUTTON_CLASSES = {
   confirmAction: {
     icon: 'pi pi-check',
   },
+  addButton: {
+    icon: 'pi pi-plus',
+    size: 'small' as const,
+    severity: 'secondary' as const,
+  },
+  deleteButton: {
+    icon: 'pi pi-trash',
+    size: 'small' as const,
+    severity: 'danger' as const,
+  },
 } as const

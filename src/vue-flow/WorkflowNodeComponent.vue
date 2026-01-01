@@ -2,7 +2,9 @@
 import { computed } from 'vue'
 import { Handle, Position } from '@vue-flow/core'
 import { NodeToolbar } from '@vue-flow/node-toolbar'
+import Button from 'primevue/button'
 import { useWorkflowStore } from '../stores/workflow'
+import { BUTTON_CLASSES } from '../components/common/ui-classes'
 
 interface Props {
   id: string
@@ -59,9 +61,11 @@ const addStep = () => {
 <template>
   <div class="workflow-node">
     <NodeToolbar :is-visible="selected" :position="Position.Top">
-      <button @click="addStep" class="toolbar-button">
-        ➕ Add Step
-      </button>
+      <Button 
+        @click="addStep" 
+        v-bind="BUTTON_CLASSES.addButton"
+        label="Add Step"
+      />
     </NodeToolbar>
     <div class="node-title">Workflow</div>
     <div class="node-subtitle">{{ data.workflowId }}</div>
@@ -77,56 +81,23 @@ const addStep = () => {
 </template>
 
 <style scoped>
+@import './node-styles.css';
+
 .workflow-node {
   background: var(--p-violet-500);
   color: var(--p-violet-contrast-color);
   border: 2px solid var(--p-violet-500);
-  border-radius: 0.5rem;
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  padding: 1rem;
   min-width: 200px;
 }
 
-.node-title {
-  font-weight: 700;
-  font-size: 0.875rem;
-  margin-bottom: 0.25rem;
-}
-
-.node-subtitle {
-  font-size: 0.75rem;
-}
-
-.node-info {
-  margin-top: 0.5rem;
-  font-size: 0.75rem;
-  opacity: 0.9;
+/* Workflow-specific: remove bottom margin from subtitle */
+.workflow-node .node-subtitle {
+  margin-bottom: 0;
 }
 
 .node-stats {
   margin-top: 0.25rem;
   display: flex;
   gap: 0.5rem;
-}
-
-.handle-steps {
-  background: var(--p-violet-300) !important;
-}
-
-.toolbar-button {
-  background-color: var(--p-surface-0);
-  color: var(--p-violet-500);
-  padding: 0.375rem 0.75rem;
-  border-radius: 0.375rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid var(--p-violet-500);
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.toolbar-button:hover {
-  background-color: var(--p-violet-500);
-  color: var(--p-violet-contrast-color);
 }
 </style>
