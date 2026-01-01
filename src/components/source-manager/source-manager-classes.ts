@@ -1,7 +1,7 @@
 import { INSPECTOR_CLASSES, TEXT_CLASSES } from '../inspector/inspector-classes'
 
 export const SOURCE_MANAGER_CLASSES = {
-  root: 'flex flex-column gap-3 p-3',
+  root: 'flex flex-column',
   header: 'flex align-items-start justify-content-between gap-3',
   headerText: 'flex flex-column gap-1',
   title: 'text-lg font-semibold text-color m-0',

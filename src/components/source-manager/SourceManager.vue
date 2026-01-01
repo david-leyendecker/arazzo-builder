@@ -202,13 +202,6 @@ const handleCancel = () => {
 
 <template>
   <div :class="CLASSES.root">
-    <div :class="CLASSES.header">
-      <div :class="CLASSES.headerText">
-        <h2 :class="CLASSES.title">OpenAPI Sources</h2>
-        <p :class="CLASSES.subtitle">Pick a source to work with or add a new one.</p>
-      </div>
-    </div>
-
     <Select
       v-model="selectedSourceName"
       :options="sources"
@@ -221,12 +214,9 @@ const handleCancel = () => {
       @update:modelValue="selectSource"
     >
       <template #value="{ value, placeholder }">
-        <div v-if="value && selectedSourceOption" :class="CLASSES.valueContainer">
-          <div :class="CLASSES.valueMain">
-            <span :class="CLASSES.valueName">{{ selectedSourceOption.name }}</span>
-            <Tag :value="selectedSourceOption.type" severity="info" />
-          </div>
-          <span :class="CLASSES.valueUrl">{{ selectedSourceOption.url }}</span>
+        <div v-if="value && selectedSourceOption" :class="CLASSES.valueMain">
+          <span :class="CLASSES.valueName">{{ selectedSourceOption.name }}</span>
+          <Tag :value="selectedSourceOption.type" severity="info" />
         </div>
         <span v-else>{{ placeholder }}</span>
       </template>

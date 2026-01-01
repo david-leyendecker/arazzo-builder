@@ -7,10 +7,7 @@ import { MiniMap } from '@vue-flow/minimap'
 import { useWorkflowStore } from '../../stores/workflow'
 import WorkflowNodeComponent from '../../vue-flow/WorkflowNodeComponent.vue'
 import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
-import Button from 'primevue/button'
-import Toolbar from 'primevue/toolbar'
 import Card from 'primevue/card'
-import { BUTTON_CLASSES } from '../common/ui-classes'
 
 // Import Vue Flow styles
 import '@vue-flow/core/dist/style.css'
@@ -55,36 +52,6 @@ watch(() => workflowStore.connections, (newConnections) => {
     targetHandle: conn.targetHandle || 'prev'
   }))
 }, { immediate: true, deep: true })
-
-// Handle YAML export
-const handleExportYAML = () => {
-  try {
-    const validation = workflowStore.validateWorkflow()
-    
-    if (!validation.valid) {
-      alert('Workflow validation failed:\n\n' + validation.errors.join('\n'))
-      return
-    }
-    
-    const yamlContent = workflowStore.exportToYAML()
-    
-    const blob = new Blob([yamlContent], { type: 'text/yaml' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `${workflowStore.workflow.info.title.replace(/\s+/g, '-').toLowerCase()}.arazzo.yaml`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    URL.revokeObjectURL(url)
-    
-    alert('YAML file exported successfully!')
-  } catch (error) {
-    console.error('Export failed:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    alert('Failed to export YAML: ' + errorMessage)
-  }
-}
 
 // Handle connections between nodes
 onConnect((params: Connection) => {
@@ -147,22 +114,8 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 
 <template>
   <div class="workflow-canvas-wrapper h-full w-full relative">
-    <!-- Header Bar -->
-    <Toolbar class="header-toolbar absolute top-0 left-0 right-0 z-1 border-round-0 border-left-none border-right-none border-top-none">
-      <template #start>
-        <h1 class="text-xl font-semibold m-0">Arazzo Workflow Builder</h1>
-      </template>
-      <template #end>
-        <Button 
-          v-bind="BUTTON_CLASSES.exportAction"
-          @click="handleExportYAML"
-          label="Export YAML"
-        />
-      </template>
-    </Toolbar>
-
     <!-- Vue Flow Canvas -->
-    <div class="canvas-container absolute left-0 right-0">
+    <div class="canvas-container absolute top-0 left-0 right-0 bottom-0">
       <VueFlow
         v-model:nodes="nodes"
         v-model:edges="edges"
@@ -199,11 +152,6 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 </template>
 
 <style scoped>
-.canvas-container {
-  top: 4rem;
-  bottom: 0;
-}
-
 .help-card {
   width: 22rem;
 }
