@@ -2,8 +2,10 @@
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Button from 'primevue/button'
-import { Divider } from 'primevue'
+import Divider from 'primevue/divider'
+import FloatLabel from 'primevue/floatlabel'
 import { floatLabelConfig } from '../../config/float-label.config'
+import { INSPECTOR_CLASSES, BUTTON_CLASSES } from './inspector-classes'
 import type { ArazzoParameter } from '../../types/arazzo'
 
 defineProps<{
@@ -25,32 +27,51 @@ const parameterInOptions = [
 </script>
 
 <template>
-  <div class="flex flex-column gap-3">
-    <div v-for="(param, index) in parameters" :key="index" class="flex flex-column gap-3">
-      <div class="flex align-items-center justify-content-between mb-2">
-        <FloatLabel :variant="floatLabelConfig.variant" class="flex-1">
-          <InputText :id="'param-name-' + index" :value="param.name"
-            @input="(e) => $emit('update:field', index, 'name', (e.target as HTMLInputElement).value)" size="small"
-            class="w-full" />
+  <div :class="INSPECTOR_CLASSES.itemList">
+    <div v-for="(param, index) in parameters" :key="index" :class="INSPECTOR_CLASSES.itemContainer">
+      <div :class="INSPECTOR_CLASSES.itemHeader">
+        <FloatLabel :variant="floatLabelConfig.variant" :class="INSPECTOR_CLASSES.flex1">
+          <InputText
+            :id="'param-name-' + index"
+            :model-value="param.name"
+            @update:modelValue="(value) => $emit('update:field', index, 'name', value)"
+            fluid
+          />
           <label :for="'param-name-' + index">Name</label>
         </FloatLabel>
-        <Button @click="$emit('remove', index)" icon="pi pi-times" text rounded severity="danger" size="small"
-          title="Remove parameter" />
+        <Button
+          @click="$emit('remove', index)"
+          v-bind="BUTTON_CLASSES.removeAction"
+          aria-label="Remove parameter"
+        />
       </div>
-      <FloatLabel :variant="floatLabelConfig.variant">
-        <Select :id="'param-in-' + index" :modelValue="param.in"
-          @update:modelValue="(value) => $emit('update:field', index, 'in', value)" :options="parameterInOptions"
-          optionLabel="label" optionValue="value" size="small" class="w-full" />
-        <label :for="'param-in-' + index">Location</label>
-      </FloatLabel>
-      <FloatLabel :variant="floatLabelConfig.variant">
-        <InputText :id="'param-value-' + index" :value="param.value"
-          @input="(e) => $emit('update:field', index, 'value', (e.target as HTMLInputElement).value)" size="small"
-          class="w-full" />
-        <label :for="'param-value-' + index">Value</label>
-      </FloatLabel>
 
-      <Divider v-if="index < parameters.length - 1" class="mb-0 mt-0" />
+      <div :class="INSPECTOR_CLASSES.itemContent">
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <Select
+            :id="'param-in-' + index"
+            :modelValue="param.in"
+            @update:modelValue="(value) => $emit('update:field', index, 'in', value)"
+            :options="parameterInOptions"
+            optionLabel="label"
+            optionValue="value"
+            fluid
+          />
+          <label :for="'param-in-' + index">Location</label>
+        </FloatLabel>
+
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <InputText
+            :id="'param-value-' + index"
+            :model-value="String(param.value || '')"
+            @update:modelValue="(value) => $emit('update:field', index, 'value', value)"
+            fluid
+          />
+          <label :for="'param-value-' + index">Value</label>
+        </FloatLabel>
+      </div>
+
+      <Divider v-if="index < parameters.length - 1" :class="`${INSPECTOR_CLASSES.mt3} ${INSPECTOR_CLASSES.mb0}`" />
     </div>
   </div>
 </template>

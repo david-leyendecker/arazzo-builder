@@ -3,7 +3,10 @@ import InputText from 'primevue/inputtext'
 import Textarea from 'primevue/textarea'
 import Button from 'primevue/button'
 import Checkbox from 'primevue/checkbox'
+import Divider from 'primevue/divider'
+import FloatLabel from 'primevue/floatlabel'
 import { floatLabelConfig } from '../../config/float-label.config'
+import { INSPECTOR_CLASSES, BUTTON_CLASSES, TEXT_CLASSES } from './inspector-classes'
 import type { ArazzoReusableRef } from '../../types/arazzo'
 
 defineProps<{
@@ -19,10 +22,10 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="items-list">
-    <div v-for="(action, index) in actions" :key="index" class="parameter-item">
-      <div class="parameter-row">
-        <label class="text-xs">
+  <div :class="INSPECTOR_CLASSES.itemList">
+    <div v-for="(action, index) in actions" :key="index" :class="INSPECTOR_CLASSES.itemContainer">
+      <div :class="`flex align-items-center justify-content-between ${INSPECTOR_CLASSES.mb3}`">
+        <label :class="`${INSPECTOR_CLASSES.inlineLabel} ${TEXT_CLASSES.small}`">
           <Checkbox
             binary
             :modelValue="(action as any).$ref !== undefined"
@@ -32,80 +35,42 @@ defineEmits<{
         </label>
         <Button
           @click="$emit('remove', index)"
-          icon="pi pi-times"
-          text
-          rounded
-          severity="danger"
-          size="small"
-          title="Remove"
+          v-bind="BUTTON_CLASSES.removeAction"
+          aria-label="Remove"
         />
       </div>
-      <div v-if="(action as any).$ref !== undefined" class="items-list">
+
+      <div v-if="(action as any).$ref !== undefined">
         <FloatLabel :variant="floatLabelConfig.variant">
           <InputText
-            id="action-ref-{{ index }}"
-            :value="(action as any).$ref"
-            @input="(e) => $emit('update:ref', index, (e.target as HTMLInputElement).value)"
-            size="small"
+            :id="'action-ref-' + index"
+            :model-value="(action as any).$ref"
+            @update:modelValue="(value) => $emit('update:ref', index, value || '')"
+            fluid
           />
           <label :for="'action-ref-' + index">Reference</label>
         </FloatLabel>
       </div>
+
       <div v-else>
         <FloatLabel :variant="floatLabelConfig.variant">
           <Textarea
             :id="'action-json-' + index"
-            :value="JSON.stringify(action, null, 2)"
+            :model-value="JSON.stringify(action, null, 2)"
             @blur="(e) => $emit('update:json', index, (e.target as HTMLTextAreaElement).value)"
-            rows="3"
-            class="code-textarea"
+            rows="4"
+            fluid
+            :class="INSPECTOR_CLASSES.fontMono"
           />
           <label :for="'action-json-' + index">Action (JSON)</label>
         </FloatLabel>
       </div>
+
+      <Divider v-if="index < actions.length - 1" :class="`${INSPECTOR_CLASSES.mt3} ${INSPECTOR_CLASSES.mb0}`" />
     </div>
   </div>
 </template>
 
 <style scoped>
-.items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.parameter-item {
-  padding: 0.75rem;
-  background: var(--p-surface-50);
-  border-radius: 0.375rem;
-  border: 1px solid var(--p-surface-200);
-}
-
-.parameter-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-
-.text-xs {
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-}
-
-.field-sublabel {
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-  display: block;
-  margin-bottom: 0.25rem;
-}
-
-.code-textarea {
-  font-family: monospace;
-  font-size: 0.85em;
-  width: 100%;
-}
+/* No custom styles needed - uses centralized classes */
 </style>

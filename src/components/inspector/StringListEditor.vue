@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import InputText from 'primevue/inputtext'
 import Button from 'primevue/button'
+import FloatLabel from 'primevue/floatlabel'
 import { floatLabelConfig } from '../../config/float-label.config'
+import { INSPECTOR_CLASSES, BUTTON_CLASSES } from './inspector-classes'
 
 defineProps<{
   items: string[]
@@ -15,31 +17,22 @@ defineEmits<{
 </script>
 
 <template>
-  <div class="flex flex-column gap-3">
-    <div v-for="(item, index) in items" :key="index" class="flex align-items-center gap-2">
-      <FloatLabel :variant="floatLabelConfig.variant">
+  <div :class="INSPECTOR_CLASSES.fieldGroup">
+    <div v-for="(item, index) in items" :key="index" :class="INSPECTOR_CLASSES.fieldRow">
+      <FloatLabel :variant="floatLabelConfig.variant" :class="INSPECTOR_CLASSES.flex1">
         <InputText
           :id="'item-' + index"
-          :value="item"
-          @input="(e) => $emit('update:item', index, (e.target as HTMLInputElement).value)"
-          size="small"
-          class="w-full"
+          :model-value="item"
+          @update:modelValue="(value) => $emit('update:item', index, value || '')"
+          fluid
         />
         <label :for="'item-' + index">{{ placeholder || 'Value' }}</label>
       </FloatLabel>
       <Button
         @click="$emit('remove', index)"
-        icon="pi pi-times"
-        text
-        rounded
-        severity="danger"
-        size="small"
-        title="Remove"
+        v-bind="BUTTON_CLASSES.removeAction"
+        aria-label="Remove"
       />
     </div>
   </div>
 </template>
-
-<style scoped>
-
-</style>
