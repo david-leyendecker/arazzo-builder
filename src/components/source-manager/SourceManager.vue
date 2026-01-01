@@ -1,23 +1,41 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useWorkflowStore } from '../../stores/workflow'
 import ConfirmModal from '../common/ConfirmModal.vue'
 import Button from 'primevue/button'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
-import Card from 'primevue/card'
+import Dialog from 'primevue/dialog'
+import Tag from 'primevue/tag'
 import { floatLabelConfig } from '../../config/float-label.config'
+import { SOURCE_MANAGER_CLASSES as CLASSES } from './source-manager-classes'
+import { BUTTON_CLASSES } from '../common/ui-classes'
 
 const workflowStore = useWorkflowStore()
 
 const sources = computed(() => workflowStore.sourceDescriptions)
 const selectedSource = computed(() => workflowStore.selectedSource)
-const showAddForm = ref(false)
-const newSource = ref({
+
+const selectedSourceName = ref<string | null>(selectedSource.value?.name ?? null)
+watch(
+  () => selectedSource.value?.name,
+  (name) => {
+    selectedSourceName.value = name ?? null
+  }
+)
+
+const selectedSourceOption = computed(() =>
+  sources.value.find(source => source.name === selectedSourceName.value) || null
+)
+
+const dialogVisible = ref(false)
+const dialogMode = ref<'add' | 'edit'>('add')
+const formSource = ref({
   name: '',
   url: '',
   type: 'openapi' as 'openapi' | 'arazzo'
 })
+const editingSourceName = ref<string | null>(null)
 
 const sourceTypeOptions = [
   { label: 'OpenAPI', value: 'openapi' },
@@ -31,35 +49,76 @@ const confirmationType = ref<'remove' | 'switch'>('remove')
 
 const confirmMessage = computed(() => {
   if (confirmationType.value === 'remove' && pendingRemoval.value) {
-    return `Delete OpenAPI source "${pendingRemoval.value.name}"? This action cannot be undone.`
+    return `Delete source "${pendingRemoval.value.name}"? This action cannot be undone.`
   } else if (confirmationType.value === 'switch' && pendingSelection.value) {
-    return `Switching to a different OpenAPI source will clear your current workflow. Do you want to continue?`
+    return 'Switching to a different source will clear your current workflow. Continue?'
   }
   return ''
 })
 
 const confirmTitle = computed(() => {
-  return confirmationType.value === 'remove' ? 'Remove OpenAPI source?' : 'Switch OpenAPI source?'
+  return confirmationType.value === 'remove' ? 'Remove source?' : 'Switch source?'
 })
 
 const confirmButtonText = computed(() => {
   return confirmationType.value === 'remove' ? 'Delete' : 'Continue'
 })
 
-const isDestructive = computed(() => {
-  return confirmationType.value === 'remove'
-})
+const isDestructive = computed(() => confirmationType.value === 'remove')
 
-const addSource = () => {
-  if (newSource.value.name && newSource.value.url) {
-    workflowStore.addSourceDescription({
-      name: newSource.value.name,
-      url: newSource.value.url,
-      type: newSource.value.type
-    })
-    newSource.value = { name: '', url: '', type: 'openapi' }
-    showAddForm.value = false
+const resetForm = () => {
+  formSource.value = { name: '', url: '', type: 'openapi' }
+  editingSourceName.value = null
+}
+
+const openAddDialog = () => {
+  dialogMode.value = 'add'
+  resetForm()
+  dialogVisible.value = true
+}
+
+const openEditDialog = (source: (typeof sources.value)[number]) => {
+  dialogMode.value = 'edit'
+  formSource.value = {
+    name: source.name,
+    url: source.url,
+    type: source.type || 'openapi'
   }
+  editingSourceName.value = source.name
+  dialogVisible.value = true
+}
+
+const closeDialog = () => {
+  dialogVisible.value = false
+}
+
+const addSource = (source: typeof formSource.value) => {
+  workflowStore.addSourceDescription(source)
+  selectedSourceName.value = source.name
+}
+
+const updateSource = (source: typeof formSource.value) => {
+  if (!editingSourceName.value) return
+  workflowStore.updateSourceDescription(editingSourceName.value, source)
+}
+
+const submitDialog = () => {
+  const trimmed = {
+    name: formSource.value.name.trim(),
+    url: formSource.value.url.trim(),
+    type: formSource.value.type
+  }
+
+  if (!trimmed.name || !trimmed.url) return
+
+  if (dialogMode.value === 'add') {
+    addSource(trimmed)
+    workflowStore.selectSource(trimmed.name)
+  } else {
+    updateSource(trimmed)
+  }
+
+  dialogVisible.value = false
 }
 
 const removeSource = (name: string) => {
@@ -67,21 +126,25 @@ const removeSource = (name: string) => {
 }
 
 const requestRemoveSource = (source: (typeof sources.value)[number]) => {
-  if (source.type === 'openapi') {
-    pendingRemoval.value = source
-    confirmationType.value = 'remove'
-    confirmOpen.value = true
-    return
-  }
+  pendingRemoval.value = source
+  confirmationType.value = 'remove'
+  confirmOpen.value = true
+}
 
-  removeSource(source.name)
+const triggerDeleteFromDialog = () => {
+  const sourceName = editingSourceName.value
+  if (!sourceName) return
+  const source = sources.value.find(s => s.name === sourceName)
+  if (!source) return
+  requestRemoveSource(source)
 }
 
 const confirmRemoval = () => {
   if (!pendingRemoval.value) return
-
   removeSource(pendingRemoval.value.name)
   pendingRemoval.value = null
+  dialogVisible.value = false
+  confirmOpen.value = false
 }
 
 const cancelRemoval = () => {
@@ -89,28 +152,30 @@ const cancelRemoval = () => {
   confirmOpen.value = false
 }
 
-const selectSource = (sourceName: string) => {
-  // If already selected, do nothing
-  if (selectedSource.value?.name === sourceName) return
+const selectSource = (sourceName: string | null) => {
+  const currentName = workflowStore.selectedSource?.name ?? null
+  if (!sourceName || sourceName === currentName) {
+    selectedSourceName.value = currentName
+    return
+  }
 
-  // Check if there's existing workflow data
   if (workflowStore.hasWorkflowData()) {
     pendingSelection.value = sourceName
     confirmationType.value = 'switch'
     confirmOpen.value = true
+    selectedSourceName.value = currentName
     return
   }
 
-  // No workflow data, just select
   workflowStore.selectSource(sourceName)
 }
 
 const confirmSwitch = () => {
   if (!pendingSelection.value) return
-
-  // selectSource() will handle saving the current workflow and loading the new one
   workflowStore.selectSource(pendingSelection.value)
+  selectedSourceName.value = pendingSelection.value
   pendingSelection.value = null
+  confirmOpen.value = false
 }
 
 const cancelSwitch = () => {
@@ -133,116 +198,135 @@ const handleCancel = () => {
     cancelSwitch()
   }
 }
-
-const cancelAdd = () => {
-  newSource.value = { name: '', url: '', type: 'openapi' }
-  showAddForm.value = false
-}
 </script>
 
 <template>
-  <div class="source-manager">
-    <div class="header">
-      <h2 class="title">OpenAPI Sources</h2>
-      <Button
-        v-if="!showAddForm"
-        @click="showAddForm = true"
-        label="Add"
-        icon="pi pi-plus"
-        text
-        size="small"
-      />
+  <div :class="CLASSES.root">
+    <div :class="CLASSES.header">
+      <div :class="CLASSES.headerText">
+        <h2 :class="CLASSES.title">OpenAPI Sources</h2>
+        <p :class="CLASSES.subtitle">Pick a source to work with or add a new one.</p>
+      </div>
     </div>
 
-    <!-- Add Source Form -->
-    <Card v-if="showAddForm" class="add-form">
-      <template #content>
-        <div class="form-fields">
-          <FloatLabel :variant="floatLabelConfig.variant">
-            <InputText
-              id="source-name"
-              v-model="newSource.name"
-              class="input-field"
-            />
-            <label for="source-name">Source name</label>
-          </FloatLabel>
-          <FloatLabel :variant="floatLabelConfig.variant">
-            <InputText
-              id="source-url"
-              v-model="newSource.url"
-              class="input-field"
-            />
-            <label for="source-url">URL or path</label>
-          </FloatLabel>
-          <FloatLabel :variant="floatLabelConfig.variant">
-            <Select
-              id="source-type"
-              v-model="newSource.type"
-              :options="sourceTypeOptions"
-              optionLabel="label"
-              optionValue="value"
-              class="input-field"
-            />
-            <label for="source-type">Type</label>
-          </FloatLabel>
-          <div class="form-actions">
+    <Select
+      v-model="selectedSourceName"
+      :options="sources"
+      optionLabel="name"
+      optionValue="name"
+      placeholder="Select a source"
+      :class="CLASSES.select"
+      inputId="source-select"
+      :disabled="sources.length === 0"
+      @update:modelValue="selectSource"
+    >
+      <template #value="{ value, placeholder }">
+        <div v-if="value && selectedSourceOption" :class="CLASSES.valueContainer">
+          <div :class="CLASSES.valueMain">
+            <span :class="CLASSES.valueName">{{ selectedSourceOption.name }}</span>
+            <Tag :value="selectedSourceOption.type" severity="info" />
+          </div>
+          <span :class="CLASSES.valueUrl">{{ selectedSourceOption.url }}</span>
+        </div>
+        <span v-else>{{ placeholder }}</span>
+      </template>
+
+      <template #option="{ option }">
+        <div :class="CLASSES.optionRow">
+          <div :class="CLASSES.optionText">
+            <div :class="CLASSES.optionTitleRow">
+              <span :class="CLASSES.optionName">{{ option.name }}</span>
+              <Tag :value="option.type" severity="info" />
+            </div>
+            <div :class="CLASSES.optionUrl">{{ option.url }}</div>
+          </div>
+          <Button
+            icon="pi pi-pencil"
+            text
+            @click.stop="openEditDialog(option)"
+            aria-label="Edit source"
+          />
+        </div>
+      </template>
+
+      <template #footer>
+        <div :class="CLASSES.selectFooter">
+          <Button
+            v-bind="BUTTON_CLASSES.addAction"
+            label="Add Source"
+            fluid
+            variant="text"
+            @click.stop="openAddDialog"
+          />
+        </div>
+      </template>
+    </Select>
+
+    <div v-if="sources.length === 0" :class="CLASSES.emptyState">
+      No sources added yet
+    </div>
+
+    <Dialog
+      v-model:visible="dialogVisible"
+      modal
+      :header="dialogMode === 'add' ? 'Add Source' : 'Edit Source'"
+      :style="{ width: '50vw' }"
+    >
+        <div :class="CLASSES.dialogFields">
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <InputText
+            id="dialog-source-name"
+            v-model="formSource.name"
+            class="w-full"
+          />
+          <label for="dialog-source-name">Source name</label>
+        </FloatLabel>
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <InputText
+            id="dialog-source-url"
+            v-model="formSource.url"
+            class="w-full"
+          />
+          <label for="dialog-source-url">URL or path</label>
+        </FloatLabel>
+        <FloatLabel :variant="floatLabelConfig.variant">
+          <Select
+            id="dialog-source-type"
+            v-model="formSource.type"
+            :options="sourceTypeOptions"
+            optionLabel="label"
+            optionValue="value"
+            class="w-full"
+          />
+          <label for="dialog-source-type">Type</label>
+        </FloatLabel>
+      </div>
+
+      <template #footer>
+          <div :class="CLASSES.dialogFooter">
+          <Button
+            v-if="dialogMode === 'edit'"
+              v-bind="BUTTON_CLASSES.removeAction"
+              label="Delete"
+              icon="pi pi-trash"
+            @click="triggerDeleteFromDialog"
+          />
+            <div :class="CLASSES.dialogFooterRight">
             <Button
-              @click="addSource"
-              label="Add"
-              size="small"
-            />
-            <Button
-              @click="cancelAdd"
               label="Cancel"
               severity="secondary"
-              outlined
-              size="small"
+              text
+              @click="closeDialog"
+            />
+            <Button
+              :label="dialogMode === 'add' ? 'Add Source' : 'Save Changes'"
+              icon="pi pi-check"
+              @click="submitDialog"
             />
           </div>
         </div>
       </template>
-    </Card>
-
-    <!-- Sources List -->
-    <div v-if="sources.length === 0 && !showAddForm" class="empty-state">
-      No sources added yet
-    </div>
-
-    <div v-else class="sources-list">
-      <Card
-        v-for="source in sources"
-        :key="source.name"
-        @click="selectSource(source.name)"
-        :class="['source-card', { 'source-card-selected': selectedSource?.name === source.name }]"
-      >
-        <template #content>
-          <div class="source-content">
-            <div class="source-info">
-              <div class="source-header">
-                <span class="source-name">{{ source.name }}</span>
-                <span class="badge badge-type">{{ source.type }}</span>
-                <span 
-                  v-if="selectedSource?.name === source.name"
-                  class="badge badge-active"
-                >
-                  Active
-                </span>
-              </div>
-              <p class="source-url">{{ source.url }}</p>
-            </div>
-            <Button
-              @click.stop="requestRemoveSource(source)"
-              icon="pi pi-times"
-              text
-              rounded
-              severity="secondary"
-              size="small"
-              title="Remove source"
-            />
-          </div>
-        </template>
-      </Card>
-    </div>
+    </Dialog>
 
     <ConfirmModal
       v-model:open="confirmOpen"
@@ -258,125 +342,7 @@ const cancelAdd = () => {
 </template>
 
 <style scoped>
-.source-manager {
-  padding: 1rem;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--p-text-color);
-  margin: 0;
-}
-
-.add-form {
-  margin-bottom: 0.75rem;
-}
-
-.form-fields {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.input-field {
-  width: 100%;
-}
-
-.form-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.form-actions button {
-  flex: 1;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 1rem 0;
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
-}
-
-.sources-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.source-card {
-  cursor: pointer;
-  transition: all 0.2s;
-  border: 2px solid var(--p-surface-200);
-}
-
-.source-card:hover {
-  border-color: var(--p-primary-color);
-}
-
-.source-card-selected {
-  border-color: var(--p-primary-color);
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-}
-
-.source-content {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.source-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.source-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.source-name {
-  font-weight: 500;
-  font-size: 0.875rem;
-  color: var(--p-text-color);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.source-url {
-  font-size: 0.75rem;
-  color: var(--p-text-muted-color);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 0.25rem 0 0 0;
-}
-
-.badge {
-  font-size: 0.75rem;
-  padding: 0.125rem 0.5rem;
-  border-radius: 0.25rem;
-}
-
-.badge-type {
-  background: var(--p-primary-100);
-  color: var(--p-primary-700);
-}
-
-.badge-active {
-  background: var(--p-green-100);
-  color: var(--p-green-700);
-}
+  .source-dialog {
+      width: 50vw;
+  }
 </style>

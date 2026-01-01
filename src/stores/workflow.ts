@@ -128,6 +128,49 @@ export const useWorkflowStore = defineStore('workflow', {
       this.saveSourcesToStorage()
     },
 
+    updateSourceDescription(originalName: string, updated: ArazzoSourceDescription) {
+      const index = this.workflow.sourceDescriptions.findIndex(s => s.name === originalName)
+      if (index === -1) return
+
+      const previous = this.workflow.sourceDescriptions[index]
+      const nameChanged = updated.name !== originalName
+
+      // Update the source entry
+      this.workflow.sourceDescriptions[index] = { ...previous, ...updated }
+
+      // Move persisted workflow data to the new key when renaming
+      if (nameChanged) {
+        const storage = this.loadAllWorkflowsFromStorage()
+        if (storage[originalName]) {
+          storage[updated.name] = storage[originalName]
+          delete storage[originalName]
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(storage))
+        }
+
+        if (this.selectedSourceId === originalName) {
+          this.selectedSourceId = updated.name
+        }
+      }
+
+      // Refresh OpenAPI spec or clear cached data when the type changes
+      const removeSpecByName = (name: string) => {
+        const specIndex = this.parsedSpecs.findIndex(s => s.sourceName === name)
+        if (specIndex !== -1) {
+          this.parsedSpecs.splice(specIndex, 1)
+        }
+        delete this.specErrors[name]
+      }
+
+      removeSpecByName(originalName)
+      this.operationMap.clear()
+
+      if (updated.type === 'openapi' && updated.url) {
+        this.loadOpenAPISpec(updated.name, updated.url)
+      }
+
+      this.saveSourcesToStorage()
+    },
+
     removeSourceDescription(name: string) {
       const index = this.workflow.sourceDescriptions.findIndex(s => s.name === name)
       if (index !== -1) {

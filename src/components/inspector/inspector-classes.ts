@@ -52,23 +52,8 @@ export const INSPECTOR_CLASSES = {
   accordionMultiple: true,
 } as const
 
-// Button Configurations
-export const BUTTON_CLASSES = {
-  addAction: {
-    icon: 'pi pi-plus',
-    text: true,
-    rounded: true,
-    size: 'small' as const,
-    severity: 'secondary' as const,
-  },
-  removeAction: {
-    icon: 'pi pi-times',
-    text: true,
-    rounded: true,
-    severity: 'danger' as const,
-    size: 'small' as const,
-  },
-} as const
+// Button Configurations (shared)
+export { BUTTON_CLASSES } from '../common/ui-classes'
 
 // Icon Classes
 export const ICON_CLASSES = {

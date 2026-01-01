@@ -3,7 +3,6 @@ import { computed } from 'vue'
 import { useWorkflowStore } from '../../stores/workflow'
 
 // PrimeVue Components
-import Badge from 'primevue/badge'
 import Message from 'primevue/message'
 import Card from 'primevue/card'
 

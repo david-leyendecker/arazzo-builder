@@ -10,6 +10,7 @@ import StepNodeComponent from '../../vue-flow/StepNodeComponent.vue'
 import Button from 'primevue/button'
 import Toolbar from 'primevue/toolbar'
 import Card from 'primevue/card'
+import { BUTTON_CLASSES } from '../common/ui-classes'
 
 // Import Vue Flow styles
 import '@vue-flow/core/dist/style.css'
@@ -145,23 +146,23 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 </script>
 
 <template>
-  <div class="workflow-canvas-wrapper">
+  <div class="workflow-canvas-wrapper h-full w-full relative">
     <!-- Header Bar -->
-    <Toolbar class="header-toolbar">
+    <Toolbar class="header-toolbar absolute top-0 left-0 right-0 z-1 border-round-0 border-left-none border-right-none border-top-none">
       <template #start>
-        <h1 class="app-title">Arazzo Workflow Builder</h1>
+        <h1 class="text-xl font-semibold m-0">Arazzo Workflow Builder</h1>
       </template>
       <template #end>
         <Button 
+          v-bind="BUTTON_CLASSES.exportAction"
           @click="handleExportYAML"
           label="Export YAML"
-          icon="pi pi-download"
         />
       </template>
     </Toolbar>
 
     <!-- Vue Flow Canvas -->
-    <div class="canvas-container">
+    <div class="canvas-container absolute left-0 right-0">
       <VueFlow
         v-model:nodes="nodes"
         v-model:edges="edges"
@@ -181,12 +182,12 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
     </div>
 
     <!-- Help Text -->
-    <Card class="help-card">
+    <Card class="help-card absolute bottom-0 left-0 z-1 m-3">
       <template #title>
-        <span class="help-title">Quick Tips</span>
+        <span class="text-sm font-semibold">Quick Tips</span>
       </template>
       <template #content>
-        <ul class="help-list">
+        <ul class="help-list m-0 p-0 list-none flex flex-column gap-1 text-sm text-color-secondary">
           <li>• Add an OpenAPI source to auto-create the workflow node</li>
           <li>• Select nodes to see action toolbar</li>
           <li>• Click and drag to connect nodes</li>
@@ -198,43 +199,12 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 </template>
 
 <style scoped>
-.workflow-canvas-wrapper {
-  height: 100%;
-  width: 100%;
-  position: relative;
-}
-
-.header-toolbar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 10;
-  border-radius: 0;
-  border-left: none;
-  border-right: none;
-  border-top: none;
-}
-
-.app-title {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0;
-}
-
 .canvas-container {
-  position: absolute;
   top: 4rem;
-  left: 0;
-  right: 0;
   bottom: 0;
 }
 
 .help-card {
-  position: absolute;
-  bottom: 1rem;
-  left: 1rem;
-  z-index: 10;
   width: 22rem;
 }
 
@@ -244,22 +214,6 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 
 .help-card :deep(.p-card-content) {
   padding: 0;
-}
-
-.help-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-}
-
-.help-list {
-  margin: 0;
-  padding-left: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.875rem;
-  color: var(--p-text-muted-color);
 }
 
 .workflow-canvas {
