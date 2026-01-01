@@ -165,18 +165,18 @@ watch(() => workflowStore.triggerWorkflowNodeCreation, async (newVal, oldVal) =>
 }
 
 .workflow-canvas {
-  background-color: var(--p-surface-900);
+  background-color: var(--p-surface-0);
   background-size: 20px 20px;
 }
 
 /* Vue Flow Controls styling using PrimeVue theme variables */
 .workflow-canvas-wrapper :deep(.vue-flow__controls) {
-  background-color: var(--p-surface-900) !important;
+  background-color: var(--p-surface-0) !important;
   border-color: var(--p-surface-200) !important;
 }
 
 .workflow-canvas-wrapper :deep(.vue-flow__controls-button) {
-  background-color: var(--p-surface-950) !important;
+  background-color: var(--p-surface-0) !important;
   border-color: var(--p-surface-200) !important;
   color: var(--p-text-color) !important;
 }

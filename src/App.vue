@@ -43,7 +43,7 @@ const handleExportYAML = () => {
 </script>
 
 <template>
-  <div class="app-container h-full w-full flex flex-column">
+  <div class="h-full w-full flex flex-column">
     <!-- Header Toolbar -->
     <Toolbar class="app-toolbar border-round-0 border-left-none border-right-none border-top-none">
       <template #start>
@@ -70,29 +70,10 @@ const handleExportYAML = () => {
 
       <!-- Right Sidebar -->
       <SplitterPanel :size="30" :minSize="20">
-        <div class="sidebar-container">
+        <div class="flex flex-column h-full overflow-hidden">
           <ContextualInspector />
         </div>
       </SplitterPanel>
     </Splitter>
   </div>
 </template>
-
-<style scoped>
-.app-container {
-  display: flex;
-  flex-direction: column;
-}
-
-.toolbar-center {
-  min-width: 400px;
-  max-width: 600px;
-}
-
-.sidebar-container {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-}
-</style>
